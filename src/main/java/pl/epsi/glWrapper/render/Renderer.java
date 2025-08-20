@@ -1,0 +1,71 @@
+package pl.epsi.glWrapper.render;
+
+import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL30;
+import pl.epsi.glWrapper.buffers.BufferBuilder;
+import pl.epsi.glWrapper.shader.ShaderProgram;
+import pl.epsi.glWrapper.shader.ShaderProgramKeys;
+import pl.epsi.glWrapper.utils.GlNumberType;
+import pl.epsi.glWrapper.utils.IndicesGenerator;
+import pl.epsi.glWrapper.utils.Lists;
+
+import java.util.ArrayList;
+
+public class Renderer {
+
+    private static final ArrayList<BufferBuilder> renderQueue = new ArrayList<>();
+
+    public static Matrix4f projMatrix;
+
+    public static void render() {
+        renderQueue.forEach(Renderer::renderBuffer);
+        renderQueue.clear();
+    }
+
+    public static void renderBuffer(BufferBuilder bufferBuilder) {
+        BufferBuilder.AttributeContainer positionContainer = bufferBuilder.getContainerForType(BufferBuilder.AttributeType.POSITION);
+        int vertexCount = positionContainer.getCount() / positionContainer.getSize();
+        int gl_primitive = bufferBuilder.drawMode.getGlMode();
+
+        int[] indices = IndicesGenerator.generateIndices(vertexCount, gl_primitive);
+        if (indices == null) throw new IllegalStateException("Unsupported primitive type " + gl_primitive + " (" + bufferBuilder.drawMode + ")");
+
+        GL30.glBindVertexArray(bufferBuilder.getVAO());
+
+        GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, BufferBuilder.EBO);
+        GL30.glBufferData(GL30.GL_ELEMENT_ARRAY_BUFFER, indices, GL30.GL_DYNAMIC_DRAW);
+
+        // Ugly code begins (The abstraction has caught up to me)
+        bufferBuilder.attributes.forEach(attribute -> {
+            GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, bufferBuilder.getVBO(attribute.getType()));
+
+            Object data = Lists.toPrimitiveArray(attribute.getObjects(), GlNumberType.fromGlInt(attribute.getGlNumberType()));
+
+            if (data instanceof int[]) {
+                GL30.glBufferSubData(GL30.GL_ARRAY_BUFFER, 0, (int[]) data);
+            } else if (data instanceof float[]) {
+                GL30.glBufferSubData(GL30.GL_ARRAY_BUFFER, 0, (float[]) data);
+            }
+        });
+
+        ShaderProgram shader = bufferBuilder.getShader() == null ? ShaderProgramKeys.getByVertexFormat(bufferBuilder.vertexFormat) : bufferBuilder.getShader();
+        GL30.glUseProgram(shader.ID);
+        bufferBuilder.uniformProviders.forEach(up -> up.apply(shader));
+
+        GL30.glDrawElements(bufferBuilder.drawMode.getGlMode(), indices.length, GL30.GL_UNSIGNED_INT, 0);
+
+        GL30.glBindVertexArray(0);
+
+        bufferBuilder.clear();
+    }
+
+    public static void updateProjMatrix(int width, int height) {
+        projMatrix = new Matrix4f().ortho(0.0f, width, 0.0f, height, -1, 1);
+    }
+
+    public static void addToRenderQueue(BufferBuilder builder) {
+        if (!Renderer.renderQueue.contains(builder))
+            Renderer.renderQueue.add(builder);
+    }
+
+}
