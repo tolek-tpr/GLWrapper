@@ -10,14 +10,25 @@ repositories {
     mavenCentral()
 }
 
-jar {
-    archiveBaseName.set(project.archiveBaseName)
-    archiveVersion.set(project.version)
-}
-
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    archiveBaseName.set("GLWrapper")
+    archiveVersion.set(project.version)
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'GLWrapper'
+            groupId = project.group
+            version = project.version
+            artifact(jar) // attach jar explicitly
+        }
+    }
 }
 
 ext {
