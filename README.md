@@ -235,3 +235,86 @@ So in this case it would look something like this:
 layout(location = 3) in float aFloat;
 ```
 Since I set the location to 3 and the `GlNumberType` to float this is what I will use.
+
+**NOTE**: If you want your vertex attribute to be normalized, you have to call `AttributeContainer#setNormalized(true)`
+
+## Registering custom uniforms
+Registering a custom uniform is similar to registering a custom vertex attribute in that you also need to create a
+custom `BufferBuilder` with your own shader, but this time you do not need to register an `AttributeType` or `AttributeContainer`,
+but rather just call `BufferBuilder#withUniform(UniformProvider)` as shown in the example:
+```java
+public class App {
+    
+    public void loop() {
+        while (!glfwWindowShouldClose(window)) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            // Registering a custom builder with your shader
+            BufferBuilder builder = new BufferBuilder(DrawMode.TRIANGLES, VertexFormat.POSITION_COLOR);
+            builder.withShader(new ShaderProgram(new Identifier("<namespace>", "path/to/shader.vsh"),
+                    new Identifier("<namespace>", "path/to/shader.fsh")));
+
+            // Registering a custom uniform
+            UniformProvider myUniformProvider = new UniformProvider() {
+                
+                @Override
+                public void apply(ShaderProgram program) {
+                    program.uniformFloat("time", (float) glfwGetTime());
+                }
+                
+            };
+            
+            // Actually adding it to the BufferBuilder object
+            builder.withUniform(myUniformProvider);
+
+            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 255, 0)    .color(1, 0, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
+            
+            Renderer.render();
+        }
+    }
+    
+}
+```
+This is a fairly simple example of just setting a time uniform, however you can do much more by just changing the way you
+create and handle the logic within `UniformProvider`. You might also want to make custom classes for uniforms that are common
+like for example `ProjectionMatrixUniformProvider` which is by default on every `VertexFormat` so that you can use
+screen space coordinates instead of NDC coordinates as discussed earlier. This is a small example of doing just that but with
+a view matrix:
+```java
+public class App {
+    
+    public void loop() {
+        Matrix4f viewMatrix = new Matrix4f(); // Set up your view matrix
+        
+        while (!glfwWindowShouldClose(window)) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            // Registering a custom builder with your shader
+            BufferBuilder builder = new BufferBuilder(DrawMode.TRIANGLES, VertexFormat.POSITION_COLOR);
+            builder.withShader(new ShaderProgram(new Identifier("<namespace>", "path/to/shader.vsh"),
+                    new Identifier("<namespace>", "path/to/shader.fsh")));
+            
+            // Add your custom uniform
+            builder.withUniform(new ViewMatrixUniformProvider(viewMatrix));
+
+            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 255, 0)    .color(1, 0, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
+            
+            Renderer.render();
+        }
+    }
+    
+    public record ViewMatrixUniformProvider(Matrix4f viewMatrix) implements UniformProvider {
+        
+        @Override
+        public void apply(ShaderProgram program) {
+            program.uniformMat4("viewMatrix", viewMatrix);
+        }
+        
+    }
+    
+}
+```

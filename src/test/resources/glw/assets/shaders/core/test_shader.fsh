@@ -5,6 +5,8 @@ in float fs;
 
 out vec4 FragColor;
 
+uniform float time;
+
 void main() {
-    FragColor = vec4(fs, fs, fs, 1) * fColor;
+    FragColor = vec4(fs, fs, fs, 1) * fColor * vec4(abs(sin(time)));
 }

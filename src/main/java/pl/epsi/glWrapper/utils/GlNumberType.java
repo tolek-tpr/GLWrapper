@@ -4,8 +4,11 @@ import org.lwjgl.opengl.GL30;
 
 public enum GlNumberType {
 
+    BYTE(Byte.class, GL30.GL_BYTE),
+    SHORT(Short.class, GL30.GL_SHORT),
+    INT(Integer.class, GL30.GL_INT),
     FLOAT(Float.class, GL30.GL_FLOAT),
-    INT(Integer.class, GL30.GL_INT);
+    DOUBLE(Double.class, GL30.GL_DOUBLE);
 
     private final Class<?> clazz;
     private final int gl_type;
@@ -24,8 +27,7 @@ public enum GlNumberType {
     }
 
     public static boolean shouldUseIPointer(GlNumberType type) {
-        if (type == INT) return true;
-        return false;
+        return type == INT;
     }
 
     public static int toGlInt(GlNumberType type) {

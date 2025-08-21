@@ -20,6 +20,11 @@ public class Lists {
         return a;
     }
 
+    public static <T> ArrayList<T> add(ArrayList<T> list, T object) {
+        if (!list.contains(object)) list.add(object);
+        return list;
+    }
+
     public static Object[] getArrayFromGlNumberType(GlNumberType type, int size) {
         return (Object[]) Array.newInstance(type.getClazz(), size);
     }

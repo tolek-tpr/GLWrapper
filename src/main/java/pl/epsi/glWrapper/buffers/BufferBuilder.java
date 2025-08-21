@@ -103,9 +103,7 @@ public class BufferBuilder {
         });
 
         // Reset
-        //GL30.glBindVertexArray(0);
         GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, 0);
-        //GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     public void addToQueue() {
@@ -114,6 +112,7 @@ public class BufferBuilder {
 
     public void clear() {
         this.attributes.forEach(AttributeContainer::clear);
+        this.uniformProviders.clear();
     }
 
     public void withShader(@Nullable ShaderProgram shader) {
@@ -134,6 +133,10 @@ public class BufferBuilder {
         if (!this.VBOs.containsKey(container.getType())) this.VBOs.put(container.getType(), VertexBufferHandler.getVBO(container.getType()));
     }
 
+    public void withUniform(UniformProvider up) {
+        Lists.add(this.uniformProviders, up);
+    }
+
     public int getVAO() {
         // Hacky place for uniforms
         ArrayList<UniformProvider> uniformProviders = new ArrayList<>();
@@ -150,7 +153,7 @@ public class BufferBuilder {
             }
         }
 
-        this.uniformProviders = uniformProviders;
+        this.uniformProviders.addAll(uniformProviders);
 
         return this.VAO;
     }
@@ -206,8 +209,7 @@ public class BufferBuilder {
         private final AttributeType type;
         private final int size;
         private final GlNumberType glNumberType;
-        // No clue what this is tbh
-        private final boolean normalized = false;
+        public boolean normalized = false;
         private final int location;
 
         private final ArrayList<Object> objects = new ArrayList<>();
@@ -234,6 +236,7 @@ public class BufferBuilder {
         public int getSize() { return this.size; }
         public boolean getNormalized() { return this.normalized; }
         public int getLocation() { return this.location; }
+        public void setNormalized(boolean normalize) { this.normalized = normalize; }
 
         // Should only be used for position
         public int getCount() {

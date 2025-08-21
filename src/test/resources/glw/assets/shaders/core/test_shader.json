@@ -1,6 +1,0 @@
-{
-  "uniforms": [
-    { "id": "projMatrix", "type": "mat4" },
-    { "id": "uSamplers", "type": "int[]"}
-  ]
-}

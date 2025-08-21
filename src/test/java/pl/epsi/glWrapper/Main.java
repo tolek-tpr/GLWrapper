@@ -10,6 +10,7 @@ import pl.epsi.glWrapper.buffers.Buffers;
 import pl.epsi.glWrapper.buffers.DrawMode;
 import pl.epsi.glWrapper.render.Renderer;
 import pl.epsi.glWrapper.shader.ShaderProgram;
+import pl.epsi.glWrapper.shader.UniformProvider;
 import pl.epsi.glWrapper.utils.*;
 
 import java.nio.IntBuffer;
@@ -113,7 +114,12 @@ public class Main {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             //DrawContext.drawRect(customBuilder, 0, 0, 255, 255, 0, true);
-            float[] c = Utils.getArgbColors0To1(0xFFFFFFFF);
+            customBuilder.withUniform(new UniformProvider() {
+                @Override
+                public void apply(ShaderProgram program) {
+                    program.uniformFloat("time", (float) glfwGetTime());
+                }
+            });
 
             customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
             customBuilder.vertex(0, 255, 0)    .color(1, 0, 1, 0).attrib(type, 0f);

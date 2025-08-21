@@ -74,6 +74,11 @@ public class ShaderProgram {
         GL20.glUniform1iv(location, array);
     }
 
+    public void uniformFloat(String name, float f) {
+        int location = GL20.glGetUniformLocation(this.ID, name);
+        GL20.glUniform1f(location, f);
+    }
+
     public void use() {
         GL20.glUseProgram(ID);
     }

@@ -7,6 +7,8 @@ import java.util.Arrays;
 public class Utils {
 
     public static String readFile(InputStream in) throws IOException {
+        if (in == null) throw new IllegalArgumentException("Input stream is null when retrieving file!");
+
         final StringBuilder sBuffer = new StringBuilder();
         final BufferedReader br = new BufferedReader(new InputStreamReader(in));
         final char[] buffer = new char[1024];

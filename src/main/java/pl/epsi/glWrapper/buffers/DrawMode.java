@@ -20,7 +20,6 @@ public enum DrawMode {
     TRIANGLES(GL11.GL_TRIANGLES),
     TRIANGLE_STRIP(GL11.GL_TRIANGLE_STRIP),
     TRIANGLE_FAN(GL11.GL_TRIANGLE_FAN);
-    //QUADS(GL11.GL_QUADS); // Unsupported for now
 
     private final int mode;
 
