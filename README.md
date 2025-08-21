@@ -1,3 +1,4 @@
+[![Get it on JitPack](https://jitpack.io/v/tolek-tpr/GLWrapper.svg)](https://jitpack.io/#tolek-tpr/GLWrapper)
 # GLWrapper
 GLWrapper is an easy-to-use library for rendering with OpenGL. It provides built in buffered rendering as 
 well as immediate rendering through the `BufferBuilder` and `Immediate` classes.
