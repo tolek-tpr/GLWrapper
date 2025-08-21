@@ -1,18 +1,18 @@
-# GlWrapper
-GlWrapper is an easy-to-use library for rendering with OpenGL. It provides built in buffered rendering as 
+# GLWrapper
+GLWrapper is an easy-to-use library for rendering with OpenGL. It provides built in buffered rendering as 
 well as immediate rendering through the `BufferBuilder` and `Immediate` classes.
 
 **DISCLAIMER**: You still need SOME OpenGL knowledge for more advanced stuff! 
 
 ## Setting up
-Setting GlWrapper is extremely easy, you set up a clean LWJGL application and add a call to
-`Renderer.render()` at the end of your game loop. GlWrapper also uses a projection matrix which by default
+Setting GLWrapper is extremely easy, you set up a clean LWJGL application and add a call to
+`Renderer.render()` at the end of your game loop. GLWrapper also uses a projection matrix which by default
 uses an orthographic projection. To set the projection matrix up, simply call `Renderer.updateProjMatrix(width, height)`
 in the scale callback, or if you'd rather use a custom projection matrix, simply set `Renderer.projMatrix` which is a public field
 whenever you need to.
 
 ## Rendering
-The basic concept of GlWrapper is to use `BufferBuilder` and `Immediate` objects, there is also a `DrawContext` class
+The basic concept of GLWrapper is to use `BufferBuilder` and `Immediate` objects, there is also a `DrawContext` class
 which has some helper functions for common shapes, gradients, etc.
 
 A basic setup for using a `BufferBuilder` looks something like this:
@@ -105,9 +105,9 @@ public class App {
 Looking at the code, the `BufferBuilder` should get rendered first, however since the `BufferBuilder` is a queued object and
 `Immediate` is not, which means that in reality, the `Immediate` get's rendered first.
 
-# Advanced GlWrapper
+# Advanced GLWrapper
 ## Identifiers
-Identifiers are the primary way GlWrapper handles resources. To make an Identifier you simply call:
+Identifiers are the primary way GLWrapper handles resources. To make an Identifier you simply call:
 `new Identifier(<namespace>, <location>)`. The namespace, is the name of the folder located in the resources folder
 like for example an Identifier to the basic vertex shader would look something like this:
 `new Identifier("glw", "shaders/core/position_program.vsh")`, and the file structure would be
@@ -117,7 +117,7 @@ specifies the namespace.
 ## Registering custom BufferBuilders and Immediates
 In addition to the buffer builders provided by the `Buffers` class, you can also register your own `BufferBuilder` and
 `Immediate` objects. Why would you need to do something like this? Well, if you want to use a custom fragment or even
-vertex shader, by default GlWrapper picks the appropriate shader from a premade list, located in `ShaderProgramKeys`,
+vertex shader, by default GLWrapper picks the appropriate shader from a premade list, located in `ShaderProgramKeys`,
 but if you want more control over how your shapes look, you might want to register a custom fragment shader.
 
 ### Adding a BufferBuilder with a custom fragment shader
@@ -216,7 +216,7 @@ public class App {
 }
 ```
 Let's go through each new line step by step. You should already be familiar with registering a custom `BufferBuilder` with
-your own shader. Next you need to register an `AttributeType` object, which allows GlWrapper to create a custom VBO 
+your own shader. Next you need to register an `AttributeType` object, which allows GLWrapper to create a custom VBO 
 automatically, after you have your type which you will use to both create a `AttributeContainer` and to write data to said
 container, you need to actually create your `AttributeContainer`. To do this, simply call new on `AttributeContainer` like so:
 ```java
