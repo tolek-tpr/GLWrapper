@@ -23,10 +23,11 @@ jar {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId = 'GLWrapper'
+            from components.java   // <-- this is key!
+
             groupId = project.group
+            artifactId = 'GLWrapper'
             version = project.version
-            artifact(jar) // attach jar explicitly
         }
     }
 }
