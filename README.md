@@ -2,6 +2,8 @@
 GLWrapper is an easy-to-use library for rendering with OpenGL. It provides built in buffered rendering as 
 well as immediate rendering through the `BufferBuilder` and `Immediate` classes.
 
+If you would like to check out how GLWrapper compares to raw OpenGL checkout [Comparison.md](docs/Comparison.md)
+
 **DISCLAIMER**: You still need SOME OpenGL knowledge for more advanced stuff! 
 
 ## Setting up
