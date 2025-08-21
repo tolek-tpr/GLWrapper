@@ -37,10 +37,6 @@ public class BufferBuilder {
     @Nullable
     private ShaderProgram shader;
 
-    static {
-        BufferBuilder.AttributeType.register("POSITION", "COLOR", "TEXTURE");
-    }
-
     protected BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat, int VAO) {
         this.drawMode = drawMode;
         this.vertexFormat = vertexFormat;
@@ -177,6 +173,10 @@ public class BufferBuilder {
     public record AttributeType(String name) {
 
         private static final HashMap<String, AttributeType> REGISTRY = new HashMap<>();
+
+        static {
+            BufferBuilder.AttributeType.register("POSITION", "COLOR", "TEXTURE");
+        }
 
         public static AttributeType register(String name) {
             return AttributeType.REGISTRY.computeIfAbsent(name, AttributeType::new);
