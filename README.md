@@ -14,6 +14,9 @@ uses an orthographic projection. To set the projection matrix up, simply call `R
 in the scale callback, or if you'd rather use a custom projection matrix, simply set `Renderer.projMatrix` which is a public field
 whenever you need to.
 
+Windows natives are provided by default, but if you want to use a different operating system, copy and paste the
+natives block from the build.gradle in this repo
+
 ## Rendering
 The basic concept of GLWrapper is to use `BufferBuilder` and `Immediate` objects, there is also a `DrawContext` class
 which has some helper functions for common shapes, gradients, etc.
