@@ -166,8 +166,32 @@ public class App {
 }
 ```
 If you would like to register a custom `Immediate` the process is basically the same. You create an `Immediate` object
-like you do with the `BufferBuilder` and call the same function as on the `BufferBuilder`.
+like you do with the `BufferBuilder` and call the same function as on the `BufferBuilder`, which you can see here:
+```java
+public class App {
+    
+    public void loop() {
+        while (!glfwWindowShouldClose(window)) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            Immediate immediate = new Immediate(DrawMode.TRIANGLES, VertexFormat.POSITION_COLOR);
+            immediate.withFragmentShader(new Identifier("<namespace>", "path/to/shader.fsh"));
+            
+            DrawContext.drawRect(immediate, 0, 0, 300, 300, 0, true);
+            
+            Renderer.render();
+        }
+    }
+    
+}
+```
+### Adding a BufferBuilder with a custom vertex and fragment shader
 You can also register entirely custom shaders (so you use a custom vertex and fragment shader) by doing something like this:
+
+**NOTE**: You can also set custom shaders on the default BufferBuilders provided by the `Buffers` class by calling the same methods. 
+This is generally not recommended as it can lead to using the wrong shader later when trying to draw something with the
+default shader for that buffer if you forget to reset it.
+To reset the shader to the default for its vertex format, simply call `BufferBuilder#withShader(null)`
 ```java
 public class App {
     
