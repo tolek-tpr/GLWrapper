@@ -59,31 +59,31 @@ dependencies {
     api "org.joml:joml-primitives:$jomlPrimitivesVersion"
 
     // Natives for all platforms (runtime only)
-    api "org.lwjgl:lwjgl:$lwjglVersion:natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl:$lwjglVersion:natives-windows"
     runtimeOnly "org.lwjgl:lwjgl:$lwjglVersion:natives-linux"
     runtimeOnly "org.lwjgl:lwjgl:$lwjglVersion:natives-macos"
 
-    api "org.lwjgl:lwjgl-assimp:$lwjglVersion:natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl-assimp:$lwjglVersion:natives-windows"
     runtimeOnly "org.lwjgl:lwjgl-assimp:$lwjglVersion:natives-linux"
     runtimeOnly "org.lwjgl:lwjgl-assimp:$lwjglVersion:natives-macos"
 
-    api "org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-windows"
     runtimeOnly "org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-linux"
     runtimeOnly "org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-macos"
 
-    api "org.lwjgl:lwjgl-nfd:$lwjglVersion:natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl-nfd:$lwjglVersion:natives-windows"
     runtimeOnly "org.lwjgl:lwjgl-nfd:$lwjglVersion:natives-linux"
     runtimeOnly "org.lwjgl:lwjgl-nfd:$lwjglVersion:natives-macos"
 
-    api "org.lwjgl:lwjgl-openal:$lwjglVersion:natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl-openal:$lwjglVersion:natives-windows"
     runtimeOnly "org.lwjgl:lwjgl-openal:$lwjglVersion:natives-linux"
     runtimeOnly "org.lwjgl:lwjgl-openal:$lwjglVersion:natives-macos"
 
-    api "org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-windows"
     runtimeOnly "org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-linux"
     runtimeOnly "org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-macos"
 
-    api "org.lwjgl:lwjgl-stb:$lwjglVersion:natives-windows"
+    runtimeOnly "org.lwjgl:lwjgl-stb:$lwjglVersion:natives-windows"
     runtimeOnly "org.lwjgl:lwjgl-stb:$lwjglVersion:natives-linux"
     runtimeOnly "org.lwjgl:lwjgl-stb:$lwjglVersion:natives-macos"
 }
