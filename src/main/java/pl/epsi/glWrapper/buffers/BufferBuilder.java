@@ -1,5 +1,6 @@
 package pl.epsi.glWrapper.buffers;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
@@ -11,6 +12,8 @@ import pl.epsi.glWrapper.shader.UniformProvider;
 import pl.epsi.glWrapper.utils.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class BufferBuilder {
@@ -34,13 +37,54 @@ public class BufferBuilder {
     @Nullable
     private ShaderProgram shader;
 
+    static {
+        BufferBuilder.AttributeType.register("POSITION", "COLOR", "TEXTURE");
+    }
+
     protected BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat, int VAO) {
         this.drawMode = drawMode;
         this.vertexFormat = vertexFormat;
         attributes.addAll(vertexFormat.getAttributes());
         this.VBOs = VertexBufferHandler.getVBOsForVertexFormat(this.vertexFormat);
         this.VAO = VAO;
+    }
 
+    public BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {
+        this(drawMode, vertexFormat, GL33.glGenVertexArrays());
+    }
+
+    public BufferBuilder vertex(float x, float y, float z) {
+        AttributeContainer container = getContainerForType(AttributeType.get("POSITION"));
+        container.addValues(x, y, z);
+        return this;
+    }
+
+    public BufferBuilder color(float a, float r, float g, float b) {
+        AttributeContainer container = getContainerForType(AttributeType.get("COLOR"));
+        container.addValues(r, g, b, a);
+        return this;
+    }
+
+    public BufferBuilder texture(float u, float v, Identifier texture) {
+        AttributeContainer container = getContainerForType(AttributeType.get("TEXTURE"));
+        var textureIndex = Utils.getIndexForObject(this.textures, TexturePool.getTexture(texture));
+        if (!this.textures.contains(TexturePool.getTexture(texture))) this.textures.add(TexturePool.getTexture(texture));
+        container.addValues(u, v, (float) textureIndex);
+        return this;
+    }
+
+    public BufferBuilder attrib(AttributeType type, Object... objects) {
+        AttributeContainer container = getContainerForType(type);
+        return this.attrib(container, objects);
+    }
+
+    public BufferBuilder attrib(AttributeContainer container, Object... objects) {
+        if (!this.attributes.contains(container)) throw new IllegalArgumentException("Tried to access attribute container with type " + container.getType() + " but this builder does not have it!");
+        container.addValues(objects);
+        return this;
+    }
+
+    public void setupVao() {
         GL30.glBindVertexArray(this.VAO);
         GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, BufferBuilder.EBO);
         this.attributes.forEach((attribute) -> {
@@ -59,33 +103,9 @@ public class BufferBuilder {
         });
 
         // Reset
-        GL30.glBindVertexArray(0);
+        //GL30.glBindVertexArray(0);
         GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, 0);
-        GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
-
-    public BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {
-        this(drawMode, vertexFormat, GL33.glGenVertexArrays());
-    }
-
-    public BufferBuilder vertex(float x, float y, float z) {
-        AttributeContainer container = getContainerForType(AttributeType.POSITION);
-        container.addValues(x, y, z);
-        return this;
-    }
-
-    public BufferBuilder color(float a, float r, float g, float b) {
-        AttributeContainer container = getContainerForType(AttributeType.COLOR);
-        container.addValues(r, g, b, a);
-        return this;
-    }
-
-    public BufferBuilder texture(float u, float v, Identifier texture) {
-        AttributeContainer container = getContainerForType(AttributeType.TEXTURE);
-        var textureIndex = Utils.getIndexForObject(this.textures, TexturePool.getTexture(texture));
-        if (!this.textures.contains(TexturePool.getTexture(texture))) this.textures.add(TexturePool.getTexture(texture));
-        container.addValues(u, v, (float) textureIndex);
-        return this;
+        //GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     public void addToQueue() {
@@ -107,6 +127,11 @@ public class BufferBuilder {
         }
         this.shader = new ShaderProgram(ShaderProgramKeys.getVertexShaderByVertexFormat(this.vertexFormat), fragmentShader);
         return this.shader;
+    }
+
+    public void withVertexAttribute(AttributeContainer container) {
+        if (!this.attributes.contains(container)) this.attributes.add(container);
+        if (!this.VBOs.containsKey(container.getType())) this.VBOs.put(container.getType(), VertexBufferHandler.getVBO(container.getType()));
     }
 
     public int getVAO() {
@@ -146,11 +171,33 @@ public class BufferBuilder {
         throw new IllegalArgumentException("Unknown attribute (" + type + ") for " + this.getClass().getName() + " with VertexFormat " + vertexFormat);
     }
 
-    public static enum AttributeType {
+    public record AttributeType(String name) {
 
-        POSITION,
-        COLOR,
-        TEXTURE
+        private static final HashMap<String, AttributeType> REGISTRY = new HashMap<>();
+
+        public static AttributeType register(String name) {
+            return AttributeType.REGISTRY.computeIfAbsent(name, AttributeType::new);
+        }
+
+        public static void register(String... names) {
+            for (String s : names) {
+                AttributeType.REGISTRY.computeIfAbsent(s, AttributeType::new);
+            }
+        }
+
+        public static AttributeType get(String name) {
+            return AttributeType.REGISTRY.get(name);
+        }
+
+        public static Collection<AttributeType> values() {
+            return Collections.unmodifiableCollection(REGISTRY.values());
+        }
+
+        @NotNull
+        @Override
+        public String toString() {
+            return name;
+        }
 
     }
 
@@ -190,7 +237,7 @@ public class BufferBuilder {
 
         // Should only be used for position
         public int getCount() {
-            if (this.type != AttributeType.POSITION) throw new IllegalStateException("Executed getCount on AttributeContainer that is a " + type + " type");
+            if (this.type != AttributeType.get("POSITION")) throw new IllegalStateException("Executed getCount on AttributeContainer that is a " + type + " type");
             return objects.size();
         }
 

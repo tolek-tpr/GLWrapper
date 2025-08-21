@@ -45,29 +45,29 @@ public enum DrawMode {
 
         // VertexFormat: pos(float float float)
         POSITION(0, Lists.asArrayList(
-                new AttributeContainer(AttributeType.POSITION, 3, GlNumberType.FLOAT, 0)
+                new AttributeContainer(AttributeType.get("POSITION"), 3, GlNumberType.FLOAT, 0)
         ), Lists.asArrayList(
                 ProjectionMatrixUniformProvider.class
         )),
         // VertexFormat: pos(float float float), color(float float float float)
         POSITION_COLOR(1, Lists.asArrayList(
-                new AttributeContainer(AttributeType.POSITION, 3, GlNumberType.FLOAT, 0),
-                new AttributeContainer(AttributeType.COLOR, 4, GlNumberType.FLOAT, 1)
+                new AttributeContainer(AttributeType.get("POSITION"), 3, GlNumberType.FLOAT, 0),
+                new AttributeContainer(AttributeType.get("COLOR"), 4, GlNumberType.FLOAT, 1)
         ), Lists.asArrayList(
                 ProjectionMatrixUniformProvider.class
         )),
         // VertexFormat: pos(float float float), UV(float float float(textureIDX))
         POSITION_TEXTURE(2, Lists.asArrayList(
-                new AttributeContainer(AttributeType.POSITION, 3, GlNumberType.FLOAT, 0),
-                new AttributeContainer(AttributeType.TEXTURE, 3, GlNumberType.FLOAT, 2)
+                new AttributeContainer(AttributeType.get("POSITION"), 3, GlNumberType.FLOAT, 0),
+                new AttributeContainer(AttributeType.get("TEXTURE"), 3, GlNumberType.FLOAT, 2)
         ), Lists.asArrayList(
                 ProjectionMatrixUniformProvider.class, TextureSamplerUniformProvider.class
         )),
         // VertexFormat: pos(float float float), color(float float float float), UV(float float float(textureIDX))
         POSITION_COLOR_TEXTURE(3, Lists.asArrayList(
-                new AttributeContainer(AttributeType.POSITION, 3, GlNumberType.FLOAT, 0),
-                new AttributeContainer(AttributeType.COLOR, 4, GlNumberType.FLOAT, 1),
-                new AttributeContainer(AttributeType.TEXTURE, 3, GlNumberType.FLOAT, 2)
+                new AttributeContainer(AttributeType.get("POSITION"), 3, GlNumberType.FLOAT, 0),
+                new AttributeContainer(AttributeType.get("COLOR"), 4, GlNumberType.FLOAT, 1),
+                new AttributeContainer(AttributeType.get("TEXTURE"), 3, GlNumberType.FLOAT, 2)
         ), Lists.asArrayList(
                 ProjectionMatrixUniformProvider.class, TextureSamplerUniformProvider.class
         ));

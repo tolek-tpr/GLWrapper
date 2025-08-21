@@ -10,9 +10,7 @@ import pl.epsi.glWrapper.buffers.Buffers;
 import pl.epsi.glWrapper.buffers.DrawMode;
 import pl.epsi.glWrapper.render.Renderer;
 import pl.epsi.glWrapper.shader.ShaderProgram;
-import pl.epsi.glWrapper.utils.DrawContext;
-import pl.epsi.glWrapper.utils.GradientDirection;
-import pl.epsi.glWrapper.utils.Identifier;
+import pl.epsi.glWrapper.utils.*;
 
 import java.nio.IntBuffer;
 
@@ -104,19 +102,32 @@ public class Main {
         Identifier texture = new Identifier("textures/testImage.jpg");
 
         BufferBuilder customBuilder = new BufferBuilder(DrawMode.TRIANGLES, DrawMode.VertexFormat.POSITION_COLOR);
-        //customBuilder.withShader(new ShaderProgram(new Identifier("shaders/core/test_shader.vsh"), new Identifier("shaders/core/test_shader.fsh")));
-        customBuilder.withFragmentShader(new Identifier("shaders/core/test_shader.fsh"));
+        //customBuilder.withFragmentShader(new Identifier("shaders/core/test_shader.fsh"));
+        customBuilder.withShader(new ShaderProgram(new Identifier("shaders/core/test_shader.vsh"), new Identifier("shaders/core/test_shader.fsh")));
+
+        BufferBuilder.AttributeType type = BufferBuilder.AttributeType.register("TEST_TYPE");
+        BufferBuilder.AttributeContainer customContainer = new BufferBuilder.AttributeContainer(type, 1, GlNumberType.FLOAT, 3);
+        customBuilder.withVertexAttribute(customContainer);
 
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            DrawContext.drawRect(customBuilder, 0, 0, 255, 255, 0, true);
+            //DrawContext.drawRect(customBuilder, 0, 0, 255, 255, 0, true);
+            float[] c = Utils.getArgbColors0To1(0xFFFFFFFF);
+
+            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 255, 0)    .color(1, 0, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
+            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
+            customBuilder.vertex(255, 0, 0)    .color(1, 0, 0, 1).attrib(type, 0f);
+            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
+            customBuilder.addToQueue();
 
             DrawContext.drawTexture(Buffers.getBuffer(DrawMode.TRIANGLES, DrawMode.VertexFormat.POSITION_COLOR_TEXTURE),
                     texture, 300, 300, 600, 600, 0, 0, 0, 16, 16, true);
 
-            DrawContext.drawGradient(0, 600, 150, 450, 0, GradientDirection.TOP_TO_BOTTOM, 0xFF002991, 0xFF00916f, true);
-            DrawContext.drawGradient(0, 450, 150, 300, 0, GradientDirection.BOTTOM_TO_TOP, 0xFF002991, 0xFF00916f, true);
+            DrawContext.drawGradient(000, 600, 150, 450, 0, GradientDirection.TOP_TO_BOTTOM, 0xFF002991, 0xFF00916f, true);
+            DrawContext.drawGradient(000, 450, 150, 300, 0, GradientDirection.BOTTOM_TO_TOP, 0xFF002991, 0xFF00916f, true);
             DrawContext.drawGradient(150, 600, 300, 450, 0, GradientDirection.LEFT_TO_RIGHT, 0xFF002991, 0xFF00916f, true);
             DrawContext.drawGradient(150, 450, 300, 300, 0, GradientDirection.RIGHT_TO_LEFT, 0xFF002991, 0xFF00916f, true);
 

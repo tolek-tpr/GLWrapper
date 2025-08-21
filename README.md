@@ -185,3 +185,53 @@ public class App {
     
 }
 ```
+## Registering custom Vertex Attributes
+To register a custom vertex attribute, you will need a few things. A custom vertex shader, a custom buffer and most
+importantly, a custom `AttributeContainer`. Registering each of them is fairly simple and looks like this:
+```java
+public class App {
+    
+    public void loop() {
+        while (!glfwWindowShouldClose(window)) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            // Registering a custom builder with your shader
+            BufferBuilder builder = new BufferBuilder(DrawMode.TRIANGLES, VertexFormat.POSITION_COLOR);
+            builder.withShader(new ShaderProgram(new Identifier("<namespace>", "path/to/shader.vsh"),
+                    new Identifier("<namespace>", "path/to/shader.fsh")));
+
+            // Registering a custom attribute type and attribute container
+            BufferBuilder.AttributeType type = BufferBuilder.AttributeType.register("TEST_TYPE");
+            BufferBuilder.AttributeContainer customContainer = new BufferBuilder.AttributeContainer(type, 1, GlNumberType.FLOAT, 3);
+            customBuilder.withVertexAttribute(customContainer);
+
+            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 255, 0)    .color(1, 0, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
+            
+            Renderer.render();
+        }
+    }
+    
+}
+```
+Let's go through each new line step by step. You should already be familiar with registering a custom `BufferBuilder` with
+your own shader. Next you need to register an `AttributeType` object, which allows GlWrapper to create a custom VBO 
+automatically, after you have your type which you will use to both create a `AttributeContainer` and to write data to said
+container, you need to actually create your `AttributeContainer`. To do this, simply call new on `AttributeContainer` like so:
+```java
+AttributeContainer container = new AttributeContainer(AttributeType, size, GlNumberType, location);
+```
+The `AttributeType` parameter should be self-explanatory, the next parameter is the size, or how many of your data type
+should go in per vertex, in this example the size is 1 since I only want to provide one float to my vertex shader, I 
+specify 1 as the size. Next is the `GlNumberType`, which is a wrapper for most of the `GL_FLOAT`, `GL_INT` etc.
+It simply specifies the object type that you will receive in the vertex shader. The last argument is the location, or basically
+what you put in the vertex shader to receive your vertex attribute like this:
+```glsl
+layout(location = X) in <TYPE> <NAME>
+```
+So in this case it would look something like this:
+```glsl
+layout(location = 3) in float aFloat;
+```
+Since I set the location to 3 and the `GlNumberType` to float this is what I will use.

@@ -23,7 +23,9 @@ public class Renderer {
     }
 
     public static void renderBuffer(BufferBuilder bufferBuilder) {
-        BufferBuilder.AttributeContainer positionContainer = bufferBuilder.getContainerForType(BufferBuilder.AttributeType.POSITION);
+        bufferBuilder.setupVao();
+
+        BufferBuilder.AttributeContainer positionContainer = bufferBuilder.getContainerForType(BufferBuilder.AttributeType.get("POSITION"));
         int vertexCount = positionContainer.getCount() / positionContainer.getSize();
         int gl_primitive = bufferBuilder.drawMode.getGlMode();
 
@@ -32,7 +34,6 @@ public class Renderer {
 
         GL30.glBindVertexArray(bufferBuilder.getVAO());
 
-        GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, BufferBuilder.EBO);
         GL30.glBufferData(GL30.GL_ELEMENT_ARRAY_BUFFER, indices, GL30.GL_DYNAMIC_DRAW);
 
         // Ugly code begins (The abstraction has caught up to me)
