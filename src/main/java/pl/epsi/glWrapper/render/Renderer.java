@@ -8,6 +8,7 @@ import pl.epsi.glWrapper.shader.ShaderProgramKeys;
 import pl.epsi.glWrapper.utils.GlNumberType;
 import pl.epsi.glWrapper.utils.IndicesGenerator;
 import pl.epsi.glWrapper.utils.Lists;
+import pl.epsi.glWrapper.utils.Time;
 
 import java.util.ArrayList;
 
@@ -15,11 +16,13 @@ public class Renderer {
 
     private static final ArrayList<BufferBuilder> renderQueue = new ArrayList<>();
 
-    public static Matrix4f projMatrix;
+    public static Matrix4f projMatrix = new Matrix4f().identity();
+    public static Matrix4f viewMatrix = new Matrix4f().identity();
 
     public static void render() {
         renderQueue.forEach(Renderer::renderBuffer);
         renderQueue.clear();
+        Time.onEndFrame();
     }
 
     public static void renderBuffer(BufferBuilder bufferBuilder) {
@@ -60,9 +63,18 @@ public class Renderer {
         bufferBuilder.clear();
     }
 
-    public static void updateProjMatrix(int width, int height) {
-        projMatrix = new Matrix4f().ortho(0.0f, width, 0.0f, height, -1, 1);
+    public static void updateProjMatrix(int width, int height, boolean perspective) {
+        projMatrix.identity();
+        if (perspective) {
+            projMatrix.perspective((float) Math.toRadians(70.0f),
+                    (float) width / height,
+                    0.01f, 1000f);
+        } else {
+            projMatrix.ortho(0, width, height, 0, -1, 1);
+        }
     }
+
+
 
     public static void addToRenderQueue(BufferBuilder builder) {
         if (!Renderer.renderQueue.contains(builder))

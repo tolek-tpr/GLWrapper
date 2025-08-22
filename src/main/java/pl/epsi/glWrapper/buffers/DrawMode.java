@@ -4,6 +4,7 @@ import org.lwjgl.opengl.GL11;
 import pl.epsi.glWrapper.shader.ProjectionMatrixUniformProvider;
 import pl.epsi.glWrapper.shader.TextureSamplerUniformProvider;
 import pl.epsi.glWrapper.shader.UniformProvider;
+import pl.epsi.glWrapper.shader.ViewMatrixUniformProvider;
 import pl.epsi.glWrapper.utils.GlNumberType;
 import pl.epsi.glWrapper.utils.Lists;
 
@@ -46,21 +47,21 @@ public enum DrawMode {
         POSITION(0, Lists.asArrayList(
                 new AttributeContainer(AttributeType.get("POSITION"), 3, GlNumberType.FLOAT, 0)
         ), Lists.asArrayList(
-                ProjectionMatrixUniformProvider.class
+                ProjectionMatrixUniformProvider.class, ViewMatrixUniformProvider.class
         )),
         // VertexFormat: pos(float float float), color(float float float float)
         POSITION_COLOR(1, Lists.asArrayList(
                 new AttributeContainer(AttributeType.get("POSITION"), 3, GlNumberType.FLOAT, 0),
                 new AttributeContainer(AttributeType.get("COLOR"), 4, GlNumberType.FLOAT, 1)
         ), Lists.asArrayList(
-                ProjectionMatrixUniformProvider.class
+                ProjectionMatrixUniformProvider.class, ViewMatrixUniformProvider.class
         )),
         // VertexFormat: pos(float float float), UV(float float float(textureIDX))
         POSITION_TEXTURE(2, Lists.asArrayList(
                 new AttributeContainer(AttributeType.get("POSITION"), 3, GlNumberType.FLOAT, 0),
                 new AttributeContainer(AttributeType.get("TEXTURE"), 3, GlNumberType.FLOAT, 2)
         ), Lists.asArrayList(
-                ProjectionMatrixUniformProvider.class, TextureSamplerUniformProvider.class
+                ProjectionMatrixUniformProvider.class, TextureSamplerUniformProvider.class, ViewMatrixUniformProvider.class
         )),
         // VertexFormat: pos(float float float), color(float float float float), UV(float float float(textureIDX))
         POSITION_COLOR_TEXTURE(3, Lists.asArrayList(
@@ -68,7 +69,7 @@ public enum DrawMode {
                 new AttributeContainer(AttributeType.get("COLOR"), 4, GlNumberType.FLOAT, 1),
                 new AttributeContainer(AttributeType.get("TEXTURE"), 3, GlNumberType.FLOAT, 2)
         ), Lists.asArrayList(
-                ProjectionMatrixUniformProvider.class, TextureSamplerUniformProvider.class
+                ProjectionMatrixUniformProvider.class, TextureSamplerUniformProvider.class, ViewMatrixUniformProvider.class
         ));
 
         private final int format;
