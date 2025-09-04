@@ -3,130 +3,142 @@ package pl.epsi.glWrapper.camera;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
+import pl.epsi.glWrapper.callbacks.Keyboard;
+import pl.epsi.glWrapper.render.Renderer;
 import pl.epsi.glWrapper.utils.Time;
 
 public class Camera {
 
-    private enum CameraMovement {
-        FORWARD,
-        BACKWARD,
-        LEFT,
-        RIGHT
-    }
+    private static final float YAW = -90f;
+    private static final float PITCH = 0f;
+    private static final float MOVEMENT_SPEED = 500f;
+    private static final float MOUSE_SENSITIVITY = 0.1f;
+    private static final float ZOOM = 45.0f;
 
     private final Vector3f position;
-    private final Vector3f rotation;
-    private double lastPosX, lastPosY;
+    private final Vector3f worldUp;
 
-    private final Matrix4f viewMatrix;
+    private Vector3f front;
+    private Vector3f up;
+    private Vector3f right;
 
-    public static float SPEED = 1000;
-    public static float SENSITIVITY = 0.5f;
+    float yaw, pitch;
+    float movementSpeed, mouseSensitivity, zoom;
 
     public Camera() {
-        this.position = new Vector3f(0, 0, 0);
-        this.rotation = new Vector3f(0, 0, 0);
-        this.viewMatrix = new Matrix4f();
+        this(new Vector3f(0, 0, 0), new Vector3f(0, 1, 0), YAW, PITCH, new Vector3f(0, 0, -1),
+                MOVEMENT_SPEED, MOUSE_SENSITIVITY, ZOOM);
     }
 
-    public Camera(Vector3f position, Vector3f rotation) {
-        this.position = new Vector3f(position);
-        this.rotation = new Vector3f(rotation);
-        this.viewMatrix = new Matrix4f();
+    public Camera(Vector3f position, Vector3f up, float yaw, float pitch) {
+        this(position, up, yaw, pitch, new Vector3f(0, 0, -1), MOVEMENT_SPEED, MOUSE_SENSITIVITY, ZOOM);
+    }
+
+    public Camera(Vector3f position, Vector3f up, float yaw, float pitch, Vector3f front, float movementSpeed, float mouseSensitivity, float zoom) {
+        this.position = position;
+        this.up = up;
+        this.worldUp = up;
+        this.yaw = yaw;
+        this.pitch = pitch;
+        this.front = front;
+        this.movementSpeed = movementSpeed;
+        this.mouseSensitivity = mouseSensitivity;
+        this.zoom = zoom;
+
+        updateCameraVectors();
     }
 
     public Matrix4f getViewMatrix() {
-        viewMatrix.identity();
-
-        viewMatrix.rotateX((float) Math.toRadians(rotation.x))
-                .rotateY((float) Math.toRadians(rotation.y))
-                .rotateZ((float) Math.toRadians(rotation.z));
-
-        viewMatrix.translate(-position.x, -position.y, -position.z);
-
-        return viewMatrix;
+        return new Matrix4f().lookAt(position, new Vector3f(position).add(front), up);
     }
 
-    public Vector3f getPosition() {
-        return position;
+    public void tick(long window) {
+        Renderer.viewMatrix = this.getViewMatrix();
+        this.cameraMovementHandler(window);
     }
 
-    public Vector3f getRotation() {
-        return rotation;
+    public void cameraMovementHandler(long window) {
+        if (Keyboard.isKeyPressed(window, GLFW.GLFW_KEY_W)) {
+            this.cameraMovementHandler(CameraMovement.FORWARD, Time.getDeltaTime());
+        } else if (Keyboard.isKeyPressed(window, GLFW.GLFW_KEY_S)) {
+            this.cameraMovementHandler(CameraMovement.BACKWARD, Time.getDeltaTime());
+        } else if (Keyboard.isKeyPressed(window, GLFW.GLFW_KEY_A)) {
+            this.cameraMovementHandler(CameraMovement.LEFT, Time.getDeltaTime());
+        } else if (Keyboard.isKeyPressed(window, GLFW.GLFW_KEY_D)) {
+            this.cameraMovementHandler(CameraMovement.RIGHT, Time.getDeltaTime());
+        } else if (Keyboard.isKeyPressed(window, GLFW.GLFW_KEY_SPACE)) {
+            this.cameraMovementHandler(CameraMovement.UP, Time.getDeltaTime());
+        } else if (Keyboard.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT)) {
+            this.cameraMovementHandler(CameraMovement.DOWN, Time.getDeltaTime());
+        }
     }
 
-    public void setPosition(float x, float y, float z) {
-        this.position.set(x, y, z);
+    public void cameraMovementHandler(CameraMovement direction, float deltaTime) {
+        Vector3f front = new Vector3f(this.front);
+        Vector3f right = new Vector3f(this.right);
+        Vector3f worldUp = new Vector3f(this.worldUp);
+        float velocity = movementSpeed * deltaTime;
+        if (direction == CameraMovement.FORWARD)
+            position.add(front.mul(velocity));
+        if (direction == CameraMovement.BACKWARD)
+            position.sub(front.mul(velocity));
+        if (direction == CameraMovement.LEFT)
+            position.sub(right.mul(velocity));
+        if (direction == CameraMovement.RIGHT)
+            position.add(right.mul(velocity));
+        if (direction == CameraMovement.UP)
+            position.add(worldUp.mul(velocity));
+        if (direction == CameraMovement.DOWN)
+            position.sub(worldUp.mul(velocity));
     }
 
-    public void setRotation(float pitch, float yaw, float roll) {
-        this.rotation.set(pitch, yaw, roll);
+    public void cameraMouseMoveCallback(double xOffset, double yOffset) {
+        cameraMouseMoveCallback((float) xOffset, (float) yOffset, true);
     }
 
-    public void move(float dx, float dy, float dz) {
-        position.add(dx, dy, dz);
+    public void cameraMouseMoveCallback(float xOffset, float yOffset, boolean constrainPitch) {
+        xOffset *= mouseSensitivity;
+        yOffset *= mouseSensitivity;
+
+        yaw += xOffset;
+        pitch += yOffset;
+
+        if (constrainPitch) { pitch = Math.max(-89f, Math.min(89, pitch)); }
+        updateCameraVectors();
     }
 
-    public void rotate(float dx, float dy, float dz) {
-        rotation.add(dx, dy, dz);
+    public void cameraMouseScrollCallback(double xOffset, double yOffset) {
+        this.cameraMouseScrollCallback((float) yOffset);
     }
 
-    public void moveForward(float amount) {
-        Vector3f forward = new Vector3f();
-        getForward(forward);
-        position.add(forward.mul(amount, new Vector3f()));
+    public void cameraMouseScrollCallback(float yOffset) {
+        zoom -= yOffset;
+        zoom = Math.max(1, Math.min(45, zoom));
     }
 
-    public void moveBackward(float amount) {
-        moveForward(-amount);
+    private void updateCameraVectors() {
+        float yawRad = (float) Math.toRadians(yaw);
+        float pitchRad = (float) Math.toRadians(pitch);
+
+        Vector3f newFront = new Vector3f();
+        newFront.x = (float) (Math.cos(yawRad) * Math.cos(pitchRad));
+        newFront.y = (float) (Math.sin(pitchRad));
+        newFront.z = (float) (Math.sin(yawRad) * Math.cos(pitchRad));
+
+        this.front = newFront.normalize();
+        this.right = new Vector3f(front).cross(worldUp).normalize();
+        this.up = new Vector3f(right).cross(front).normalize();
     }
 
-    public void moveRight(float amount) {
-        Vector3f right = new Vector3f();
-        getRight(right);
-        position.add(right.mul(amount, new Vector3f()));
-    }
+    public Vector3f getPos() { return this.position; }
 
-    public void moveLeft(float amount) {
-        moveRight(-amount);
-    }
-
-    private void getForward(Vector3f dest) {
-        // Calculate forward direction from pitch & yaw
-        dest.x = (float) (Math.sin(Math.toRadians(rotation.y)) * Math.cos(Math.toRadians(rotation.x)));
-        dest.y = (float) -Math.sin(Math.toRadians(rotation.x));
-        dest.z = (float) ((float) -Math.cos(Math.toRadians(rotation.y)) * Math.cos(Math.toRadians(rotation.x)));
-        dest.normalize();
-    }
-
-    private void getRight(Vector3f dest) {
-        Vector3f forward = new Vector3f();
-        getForward(forward);
-        forward.cross(new Vector3f(0, 1, 0), dest).normalize();
-    }
-
-    public void rotate(float deltaX, float deltaY) {
-        rotation.y += deltaX * SENSITIVITY;
-        rotation.x += deltaY * SENSITIVITY;
-
-        // Clamp pitch to avoid flipping
-        rotation.x = Math.max(-89f, Math.min(89f, rotation.x));
-    }
-
-    public void onKey(long window, int keyCode, int scanCode, int mods) {
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GLFW.GLFW_PRESS) this.moveForward(SPEED * Time.getDeltaTime());
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS) this.moveBackward(SPEED * Time.getDeltaTime());
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) this.moveLeft(SPEED * Time.getDeltaTime());
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) this.moveRight(SPEED * Time.getDeltaTime());
-    }
-
-    public void onMouse(long window, double xPos, double yPos) {
-        float mouseDX = (float) (xPos - lastPosX);
-        float mouseDY = (float) (yPos - lastPosY);
-        lastPosX = xPos;
-        lastPosY = yPos;
-
-        this.rotate(mouseDX, mouseDY);
+    public enum CameraMovement {
+        FORWARD,
+        BACKWARD,
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
     }
 
 }

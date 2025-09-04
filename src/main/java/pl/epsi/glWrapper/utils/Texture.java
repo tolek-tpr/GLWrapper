@@ -14,7 +14,7 @@ public class Texture {
     private final int ID;
     private int width, height;
 
-    public Texture(Identifier ident) {
+    protected Texture(Identifier identifier) {
         STBImage.stbi_set_flip_vertically_on_load(true);
 
         this.ID = GL20.glGenTextures();
@@ -29,7 +29,7 @@ public class Texture {
         IntBuffer width = BufferUtils.createIntBuffer(1);
         IntBuffer height = BufferUtils.createIntBuffer(1);
         IntBuffer channels = BufferUtils.createIntBuffer(1);
-        ByteBuffer image = loadImage(ident, width, height, channels);
+        ByteBuffer image = loadImage(identifier, width, height, channels);
 
         if (image != null) {
             this.width = width.get(0);
@@ -42,7 +42,7 @@ public class Texture {
                 assert false : "Error while loading texture, unknown number of channels = " + channels.get(0);
             }
         } else {
-            assert false : "Texture not loaded! Filepath: " + ident.toString();
+            assert false : "Texture not loaded! Filepath: " + identifier.toString();
         }
 
         STBImage.stbi_image_free(image);
