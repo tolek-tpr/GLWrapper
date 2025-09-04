@@ -109,23 +109,18 @@ public class BufferBuilder {
         this.attributes.forEach((attribute) -> {
             GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, this.getVBO(attribute.getType()));
 
-            int[] bufferSize = new int[1];
-            GL30.glGetBufferParameteriv(GL30.GL_ARRAY_BUFFER, GL30.GL_BUFFER_SIZE, bufferSize);
-            //System.out.println(Arrays.toString(bufferSize) + " | " + attribute.getCount() * Float.BYTES);
+            GL30.glBufferData(GL30.GL_ARRAY_BUFFER, (long) attribute.getCount() * Float.BYTES, GL30.GL_DYNAMIC_DRAW);
 
-            if (bufferSize[0] <= attribute.getCount() * Float.BYTES) {
-                GL30.glBufferData(GL30.GL_ARRAY_BUFFER, (long) attribute.getCount() * Float.BYTES, GL30.GL_DYNAMIC_DRAW);
-
-                if (GlNumberType.shouldUseIPointer(attribute.glNumberType)) {
-                    GL30.glVertexAttribIPointer(attribute.getLocation(), attribute.getSize(),
-                            attribute.getGlNumberType(), 0, 0);
-                } else {
-                    GL30.glVertexAttribPointer(attribute.getLocation(), attribute.getSize(),
-                            attribute.getGlNumberType(), attribute.getNormalized(), 0, 0);
-                }
-
-                GL30.glEnableVertexAttribArray(attribute.getLocation());
+            if (GlNumberType.shouldUseIPointer(attribute.glNumberType)) {
+                GL30.glVertexAttribIPointer(attribute.getLocation(), attribute.getSize(),
+                        attribute.getGlNumberType(), 0, 0);
+            } else {
+                GL30.glVertexAttribPointer(attribute.getLocation(), attribute.getSize(),
+                        attribute.getGlNumberType(), attribute.getNormalized(), 0, 0);
             }
+
+            GL30.glEnableVertexAttribArray(attribute.getLocation());
+
         });
 
         // Reset

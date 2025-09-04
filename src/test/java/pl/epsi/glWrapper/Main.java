@@ -99,7 +99,7 @@ public class Main {
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
 
         // Make the window visible
         glfwShowWindow(window);
@@ -128,16 +128,16 @@ public class Main {
         m.modelMatrix.scale(16, 16, 16);
 
         while (!glfwWindowShouldClose(window)) {
-            Profiler.startFrame();
+            //Profiler.startFrame();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             CAMERA.tick(window);
 
             RenderPass pass3D = Renderer.begin3D();
 
 
-            Profiler.startSection("For loop (Drawing meshes)");
+            //Profiler.startSection("For loop (Drawing meshes)");
             BufferBuilder3D builder3D = pass3D.getBuffer3D(DrawMode.TRIANGLES, DrawMode.VertexFormat.POSITION_TEXTURE_NORMAL);
-            for (int i = 0; i < 64; i++) {
+            for (int i = 0; i < 32; i++) {
                 for (int y = 0; y < 32; y++) {
                     Mesh temp = m.copy();
                     temp.modelMatrix.translate(i * 3, y * 3, 0);
@@ -146,17 +146,17 @@ public class Main {
 
                 }
             }
-            Profiler.endSection();
+            //Profiler.endSection();
             builder3D.addToQueue();
-            Profiler.startSection("Render");
+            //Profiler.startSection("Render");
 
             Renderer.render();
 
-            Profiler.endSection();
+            //Profiler.endSection();
 
-            Profiler.endFrame();
+            //Profiler.endFrame();
 
-            //System.out.println("FPS: " + 1.0 / Time.getDeltaTime());
+            System.out.println("FPS: " + 1.0 / Time.getDeltaTime());
 
             glfwSwapBuffers(window); // swap the color buffers
 
