@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
+import pl.epsi.glWrapper.buffers.gpu.GpuBuffer;
 import pl.epsi.glWrapper.render.Renderer;
 import pl.epsi.glWrapper.shader.ShaderProgram;
 import pl.epsi.glWrapper.shader.ShaderProgramKeys;
@@ -28,28 +29,28 @@ public class BufferBuilder {
     public ArrayList<UniformProvider> uniformProviders = new ArrayList<>();
 
     private final int VAO;
+    private final GpuBuffer VBO;
     private final Identifier id;
-    private final HashMap<AttributeType, Integer> VBOs;
     private ArrayList<Integer> indices = new ArrayList<>();
 
     @Nullable
     private ShaderProgram shader;
 
-    protected BufferBuilder(Identifier id, DrawMode drawMode, DrawMode.VertexFormat vertexFormat, int VAO) {
+    protected BufferBuilder(Identifier id, DrawMode drawMode, DrawMode.VertexFormat vertexFormat, int VAO, GpuBuffer VBO) {
         this.id = id;
         this.drawMode = drawMode;
         this.vertexFormat = vertexFormat;
         attributes.addAll(vertexFormat.getAttributes());
-        this.VBOs = VertexBufferHandler.getVBOsForVertexFormat(this.vertexFormat);
         this.VAO = VAO;
+        this.VBO = VBO;
     }
 
     protected BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {
-        this(new Identifier("DefaultBuilder#" + drawMode + "#" + vertexFormat), drawMode, vertexFormat, GL33.glGenVertexArrays());
+        this(new Identifier("DefaultBuilder#" + drawMode + "#" + vertexFormat), drawMode, vertexFormat, GL33.glGenVertexArrays(), new GpuBuffer());
     }
 
     public BufferBuilder(Identifier id, DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {
-        this(id, drawMode, vertexFormat, GL33.glGenVertexArrays());
+        this(id, drawMode, vertexFormat, GL33.glGenVertexArrays(), new GpuBuffer());
     }
 
     public BufferBuilder vertex(float x, float y, float z) {
