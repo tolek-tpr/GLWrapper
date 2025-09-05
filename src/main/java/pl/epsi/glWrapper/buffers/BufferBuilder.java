@@ -177,11 +177,16 @@ public class BufferBuilder {
                 }
             });
         } else if (this.drawMode == DrawMode.LINE_STRIP) {
-
+            builder.attributes.forEach(aContainer -> {
+                int count = aContainer.getCount();
+                int size = aContainer.getSize();
+                for (int i = size; i > 0; i--) {
+                    this.attrib(aContainer.getType(), aContainer.getObjects().get(count - i));
+                }
+            });
         } else if (this.drawMode == DrawMode.TRIANGLES) {
             int mod = attributeAmount % 3;
             if (mod != 0) {
-                System.out.println("Mod is not zero!");
                 builder.attributes.forEach(aContainer -> {
                     int size = aContainer.getSize() * mod;
                     int count = aContainer.getCount();
@@ -191,9 +196,20 @@ public class BufferBuilder {
                 });
             }
         } else if (this.drawMode == DrawMode.TRIANGLE_STRIP) {
-
+            builder.attributes.forEach(aContainer -> {
+                int count = aContainer.getCount();
+                int size = aContainer.getSize() * 2;
+                for (int i = size; i > 0; i--) {
+                    this.attrib(aContainer.getType(), aContainer.getObjects().get(count - i));
+                }
+            });
         } else if (this.drawMode == DrawMode.TRIANGLE_FAN) {
-
+            builder.attributes.forEach(aContainer -> {
+                int size = aContainer.getSize();
+                for (int i = 0; i < size; i++) {
+                    this.attrib(aContainer.getType(), aContainer.getObjects().get(i));
+                }
+            });
         }
 
         if (RenderSystem.shouldRenderFullBuffersImmediately()) {
