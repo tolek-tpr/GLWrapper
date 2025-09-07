@@ -2,13 +2,15 @@ package pl.epsi.glWrapper.utils;
 
 import org.lwjgl.opengl.GL30;
 
+import java.nio.ByteBuffer;
+
 public enum GlNumberType {
 
-    BYTE(Byte.class, GL30.GL_BYTE),
-    SHORT(Short.class, GL30.GL_SHORT),
-    INT(Integer.class, GL30.GL_INT),
-    FLOAT(Float.class, GL30.GL_FLOAT),
-    DOUBLE(Double.class, GL30.GL_DOUBLE);
+    BYTE(Byte.class, GL30.GL_BYTE)       { public void put(ByteBuffer buf, Object val) {    buf.put((Byte) val);             } },
+    SHORT(Short.class, GL30.GL_SHORT)    { public void put(ByteBuffer buf, Object val) {    buf.putShort((Short) val);       } },
+    INT(Integer.class, GL30.GL_INT)      { public void put(ByteBuffer buf, Object val) {    buf.putInt((Integer) val);       } },
+    FLOAT(Float.class, GL30.GL_FLOAT)    { public void put(ByteBuffer buf, Object val) {    buf.putFloat((Float) val);       } },
+    DOUBLE(Double.class, GL30.GL_DOUBLE) { public void put(ByteBuffer buf, Object val) {    buf.putDouble((Double) val);     } };
 
     private final Class<?> clazz;
     private final int gl_type;
@@ -17,6 +19,8 @@ public enum GlNumberType {
         this.clazz = clazz;
         this.gl_type = gl_type;
     }
+
+    public abstract void put(ByteBuffer buf, Object val);
 
     public static GlNumberType fromGlInt(int gl_type) {
         for (GlNumberType type : values()) {

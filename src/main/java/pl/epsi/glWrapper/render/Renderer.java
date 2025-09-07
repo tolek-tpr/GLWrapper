@@ -2,6 +2,7 @@ package pl.epsi.glWrapper.render;
 
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.system.MemoryUtil;
 import pl.epsi.glWrapper.buffers.BufferBuilder;
 import pl.epsi.glWrapper.buffers.BufferBuilder3D;
 import pl.epsi.glWrapper.shader.ShaderProgram;
@@ -20,49 +21,46 @@ public class Renderer {
     private static final RenderPass RENDER_PASS_3D = new RenderPass(true);
     private static final RenderPass RENDER_PASS_2D = new RenderPass(false);
 
+    private static boolean a = false;
+    private static int[] indices;
+
     public static void render() {
         if (!RenderSystem.is3D()) viewMatrix = new Matrix4f().identity();
         renderQueue.forEach(Renderer::renderBuffer);
-        renderQueue.clear();
+        //renderQueue.clear();
         Time.onEndFrame();
     }
 
     public static void renderBuffer(BufferBuilder bufferBuilder) {
+        //Profiler.startSection("VAO setup");
         bufferBuilder.setupVao();
+        //Profiler.endSection();
 
+        //Profiler.startSection("Render 1");
         BufferBuilder.AttributeContainer positionContainer = bufferBuilder.getContainerForType(BufferBuilder.AttributeType.get("POSITION"));
         int vertexCount = positionContainer.getCount() / positionContainer.getSize();
         int gl_primitive = bufferBuilder.drawMode.getGlMode();
 
-        int[] indices;
+        if (!a) {
+            if (bufferBuilder.getIndices().isEmpty()) {
+                indices = IndicesGenerator.generateIndices(vertexCount, gl_primitive);
 
-        if (bufferBuilder.getIndices().isEmpty()) {
-            indices = IndicesGenerator.generateIndices(vertexCount, gl_primitive);
-            if (indices == null)
-                throw new IllegalStateException("Unsupported primitive type " + gl_primitive + " (" + bufferBuilder.drawMode + ")");
-        } else {
-            indices = new int[bufferBuilder.getIndices().size()];
-            for (int i = 0; i < bufferBuilder.getIndices().size(); i++) {
-                indices[i] = bufferBuilder.getIndices().get(i);
+                if (indices == null)
+                    throw new IllegalStateException("Unsupported primitive type " + gl_primitive + " (" + bufferBuilder.drawMode + ")");
+            } else {
+                indices = new int[bufferBuilder.getIndices().size()];
+                for (int i = 0; i < bufferBuilder.getIndices().size(); i++) {
+                    indices[i] = bufferBuilder.getIndices().get(i);
+                }
             }
         }
 
         GL30.glBindVertexArray(bufferBuilder.getVAO());
 
-        GL30.glBufferData(GL30.GL_ELEMENT_ARRAY_BUFFER, indices, GL30.GL_DYNAMIC_DRAW);
-
-        // Ugly code begins (The abstraction has caught up to me)
-        bufferBuilder.attributes.forEach(attribute -> {
-            GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, bufferBuilder.getVBO(attribute.getType()));
-
-            Object data = Lists.toPrimitiveArray(attribute.getObjects(), GlNumberType.fromGlInt(attribute.getGlNumberType()));
-
-            if (data instanceof int[]) {
-                GL30.glBufferSubData(GL30.GL_ARRAY_BUFFER, 0, (int[]) data);
-            } else if (data instanceof float[]) {
-                GL30.glBufferSubData(GL30.GL_ARRAY_BUFFER, 0, (float[]) data);
-            }
-        });
+        if (!a) {
+            GL30.glBufferData(GL30.GL_ELEMENT_ARRAY_BUFFER, indices, GL30.GL_DYNAMIC_DRAW);
+            a = true;
+        }
 
         ShaderProgram shader = bufferBuilder.getShader() == null ?
                 (bufferBuilder instanceof BufferBuilder3D ? ShaderProgramKeys.getByVertexFormat3D(bufferBuilder.vertexFormat) :
@@ -75,8 +73,9 @@ public class Renderer {
         GL30.glDrawElements(bufferBuilder.drawMode.getGlMode(), indices.length, GL30.GL_UNSIGNED_INT, 0);
 
         GL30.glBindVertexArray(0);
-
-        bufferBuilder.clear();
+        bufferBuilder.getVBO().unbind();
+        bufferBuilder.getEBO().unbind();
+        //Profiler.endSection();
     }
 
     public static void updateProjMatrix(int width, int height, boolean perspective) {

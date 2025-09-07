@@ -127,32 +127,28 @@ public class Main {
         Mesh m = ModelLoader.loadSingleMesh(new Identifier("models/cube.obj"));
         m.modelMatrix.scale(16, 16, 16);
 
+        RenderPass pass3D = Renderer.begin3D();
+        BufferBuilder3D builder3D = pass3D.getBuffer3D(DrawMode.TRIANGLES, DrawMode.VertexFormat.POSITION_TEXTURE_NORMAL);
+        for (int i = 0; i < 32; i++) {
+            for (int y = 0; y < 32; y++) {
+                Mesh temp = m.copy();
+                temp.modelMatrix.translate(i * 3, y * 3, 0);
+
+                builder3D.mesh(temp);
+
+            }
+        }
+        builder3D.addToQueue();
+
         while (!glfwWindowShouldClose(window)) {
             //Profiler.startFrame();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             CAMERA.tick(window);
-
-            RenderPass pass3D = Renderer.begin3D();
-
-
-            //Profiler.startSection("For loop (Drawing meshes)");
-            BufferBuilder3D builder3D = pass3D.getBuffer3D(DrawMode.TRIANGLES, DrawMode.VertexFormat.POSITION_TEXTURE_NORMAL);
-            for (int i = 0; i < 32; i++) {
-                for (int y = 0; y < 32; y++) {
-                    Mesh temp = m.copy();
-                    temp.modelMatrix.translate(i * 3, y * 3, 0);
-
-                    builder3D.mesh(temp);
-
-                }
-            }
-            //Profiler.endSection();
-            builder3D.addToQueue();
-            //Profiler.startSection("Render");
+            GL30.glEnable(GL_DEPTH_TEST);
 
             Renderer.render();
 
-            //Profiler.endSection();
+            //DrawContext.drawGradient(000, 600, 150, 450, 0, GradientDirection.TOP_TO_BOTTOM, 0xFF002991, 0xFF00916f, true);
 
             //Profiler.endFrame();
 
