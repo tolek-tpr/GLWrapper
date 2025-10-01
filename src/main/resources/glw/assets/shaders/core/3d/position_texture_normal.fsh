@@ -14,10 +14,11 @@ layout(std430, binding = 1) buffer Materials {
 uniform sampler2D uTextures[8];
 
 in vec3 fUVI;
+in vec3 fDummyNormal;
 flat in int fModelIdx;
 
 out vec4 FragColor;
 
 void main() {
-    FragColor = texture(uTextures[int(fUVI.z)], vec2(fUVI.xy)) * materials[fModelIdx].color;
+    FragColor = texture(uTextures[int(fUVI.z)], vec2(fUVI.xy)) * materials[fModelIdx].color * vec4(fDummyNormal, 1);
 }

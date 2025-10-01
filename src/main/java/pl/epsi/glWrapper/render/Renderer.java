@@ -2,7 +2,6 @@ package pl.epsi.glWrapper.render;
 
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.system.MemoryUtil;
 import pl.epsi.glWrapper.buffers.BufferBuilder;
 import pl.epsi.glWrapper.buffers.BufferBuilder3D;
 import pl.epsi.glWrapper.shader.ShaderProgram;
@@ -33,6 +32,7 @@ public class Renderer {
 
     public static void renderBuffer(BufferBuilder bufferBuilder) {
         //Profiler.startSection("VAO setup");
+        bufferBuilder.setupAttribPointers();
         bufferBuilder.setupVao();
         //Profiler.endSection();
 

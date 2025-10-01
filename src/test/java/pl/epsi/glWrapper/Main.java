@@ -141,7 +141,7 @@ public class Main {
         builder3D.addToQueue();
 
         while (!glfwWindowShouldClose(window)) {
-            //Profiler.startFrame();
+            Profiler.startFrame();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             CAMERA.tick(window);
             GL30.glEnable(GL_DEPTH_TEST);
@@ -150,7 +150,7 @@ public class Main {
 
             //DrawContext.drawGradient(000, 600, 150, 450, 0, GradientDirection.TOP_TO_BOTTOM, 0xFF002991, 0xFF00916f, true);
 
-            //Profiler.endFrame();
+            Profiler.endFrame();
 
             System.out.println("FPS: " + 1.0 / Time.getDeltaTime());
 

@@ -55,14 +55,14 @@ public class BufferBuilder {
     /// Allocating around 1MB of data for vertices
     protected BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {
         this(new Identifier("DefaultBuilder#" + drawMode + "#" + vertexFormat), drawMode, vertexFormat, GL33.glGenVertexArrays(),
-                new MappedGpuBuffer(BufferTarget.ARRAY_BUFFER, BufferUsage.DYNAMIC_DRAW, 3, 1000 * 1024),
+                new MappedGpuBuffer(BufferTarget.ARRAY_BUFFER, BufferUsage.DYNAMIC_DRAW, 1, 1000 * 1024),
                 new GpuBuffer(BufferTarget.ELEMENT_ARRAY_BUFFER, BufferUsage.DYNAMIC_DRAW));
     }
 
     /// Allocating around 1MB of data for vertices
     public BufferBuilder(Identifier id, DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {
         this(id, drawMode, vertexFormat, GL33.glGenVertexArrays(),
-                new MappedGpuBuffer(BufferTarget.ARRAY_BUFFER, BufferUsage.DYNAMIC_DRAW, 3, 1000 * 1024),
+                new MappedGpuBuffer(BufferTarget.ARRAY_BUFFER, BufferUsage.DYNAMIC_DRAW, 1, 1000 * 1024),
                 new GpuBuffer(BufferTarget.ELEMENT_ARRAY_BUFFER, BufferUsage.DYNAMIC_DRAW));
     }
 
@@ -125,47 +125,74 @@ public class BufferBuilder {
         int frameOffset = VBO.getCurrentOffset();
 
         for (var attribute : this.attributes) {
-            stride += attribute.getSize() * attribute.glNumberType.getSizeInBytes();
+            stride += attribute.getCount() * attribute.glNumberType.getSizeInBytes();
         }
 
         for (var attribute : this.attributes) {
             if (GlNumberType.shouldUseIPointer(attribute.glNumberType)) {
                 GL30.glVertexAttribIPointer(attribute.getLocation(), attribute.getSize(),
-                        attribute.getGlNumberType(), stride, frameOffset + pointer);
+                        attribute.getGlNumberType(), stride, pointer);
             } else {
                 GL30.glVertexAttribPointer(attribute.getLocation(), attribute.getSize(),
-                        attribute.getGlNumberType(), attribute.getNormalized(), stride, frameOffset + pointer);
+                        attribute.getGlNumberType(), attribute.getNormalized(), stride, pointer);
             }
 
             GL30.glEnableVertexAttribArray(attribute.getLocation());
-            pointer += attribute.getSize() * attribute.glNumberType.getSizeInBytes();
+            pointer += attribute.getCount() * attribute.glNumberType.getSizeInBytes();
         }
-
     }
 
     private int ia = 0;
 
     public void setupVao() {
-        if (ia <= 3) {
-            GL30.glBindVertexArray(this.VAO);
-            EBO.bind();
-            VBO.bind();
+        //if (ia <= 3) {
+        Profiler.startSection("Data Setup");
+        GL30.glBindVertexArray(this.VAO);
+        EBO.bind();
+        VBO.bind();
 
-            int positionAttribCount = getContainerForType(AttributeType.get("POSITION")).getAttributeAmount();
-            ByteBuffer vboData = VBO.beginWrite();
-            vboData.order(ByteOrder.nativeOrder());
+        //int positionAttribCount = getContainerForType(AttributeType.get("POSITION")).getAttributeAmount();
+        ByteBuffer vboData = VBO.beginWrite();
+        vboData.order(ByteOrder.nativeOrder());
 
-            for (int i = 0; i < positionAttribCount; i++) {
-                for (AttributeContainer attribContainer : this.attributes) {
-                    for (int j = 0; j < attribContainer.getSize(); j++) {
-                        attribContainer.glNumberType.put(vboData, attribContainer.getObjects().get(i * attribContainer.getSize() + j));
-                    }
-                }
-            }
+        //for (int i = 0; i < positionAttribCount; i++) {
+        //    for (AttributeContainer attribContainer : this.attributes) {
+        //        for (int j = 0; j < attribContainer.getSize(); j++) {
+        //            attribContainer.glNumberType.put(vboData, attribContainer.getObjects().get(i * attribContainer.getSize() + j));
+        //        }
+        //    }
+        //}
 
-            VBO.endWrite();
-            ia++;
+        //for (var container : this.attributes) {
+        //    container.getObjects().forEach(obj -> {
+        //        container.glNumberType.put(vboData, obj);
+        //    });
+        //}
+        int a = this.getContainerForType(AttributeType.get("POSITION")).getAttributeAmount();
+        for (int i = 0; i < a; i++) {
+            vboData.putFloat(1);
+            vboData.putFloat(1);
+            vboData.putFloat(1);
         }
+
+        for (int i = 0; i < getContainerForType(AttributeType.get("TEXTURE")).getAttributeAmount(); i++) {
+            vboData.putFloat(1);
+            vboData.putFloat(1);
+            vboData.putFloat(0);
+        }
+
+        for (int i = 0; i < getContainerForType(AttributeType.get("NORMAL")).getAttributeAmount(); i++) {
+            vboData.putFloat(1);
+            vboData.putFloat(1);
+            vboData.putFloat(1);
+        }
+
+        for (int i = 0; i < getContainerForType(AttributeType.get("MODEL_INDEX")).getAttributeAmount(); i++) {
+            vboData.putInt(0);
+        }
+
+        VBO.endWrite();
+        Profiler.endSection();
     }
 
     public int getVAO() {

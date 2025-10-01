@@ -13,10 +13,12 @@ uniform mat4 projMatrix;
 uniform mat4 viewMatrix;
 
 out vec3 fUVI;
+out vec3 fDummyNormal;
 flat out int fModelIdx;
 
 void main() {
     gl_Position = projMatrix * viewMatrix * modelMatrices[aModelIdx] * vec4(aPos, 1.0);
     fUVI = vec3(vec2(vec4(aUVI.xy, 1, 0) * modelMatrices[aModelIdx]), aUVI.z);
     fModelIdx = aModelIdx;
+    fDummyNormal = aNormal * 0.0000001;
 }
