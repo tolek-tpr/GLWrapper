@@ -9,6 +9,7 @@ import pl.epsi.glWrapper.utils.GlNumberType;
 import pl.epsi.glWrapper.utils.IndicesGenerator;
 import pl.epsi.glWrapper.utils.Lists;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class Renderer {
@@ -27,36 +28,27 @@ public class Renderer {
 
         BufferBuilder.AttributeContainer positionContainer = bufferBuilder.getContainerForType(BufferBuilder.AttributeType.get("POSITION"));
         int vertexCount = positionContainer.getCount() / positionContainer.getSize();
-        int gl_primitive = bufferBuilder.drawMode.getGlMode();
+        int gl_primitive = bufferBuilder.bufferInfo.drawMode().getGlMode();
 
         int[] indices = IndicesGenerator.generateIndices(vertexCount, gl_primitive);
-        if (indices == null) throw new IllegalStateException("Unsupported primitive type " + gl_primitive + " (" + bufferBuilder.drawMode + ")");
+        if (indices == null) throw new IllegalStateException("Unsupported primitive type " + gl_primitive + " (" + bufferBuilder.bufferInfo.drawMode() + ")");
 
         GL30.glBindVertexArray(bufferBuilder.getVAO());
 
-        GL30.glBufferData(GL30.GL_ELEMENT_ARRAY_BUFFER, indices, GL30.GL_DYNAMIC_DRAW);
+        ByteBuffer mappedEBO = bufferBuilder.getEBO().getBuffer();
+        mappedEBO.position(0);
+        mappedEBO.asIntBuffer().put(indices);
 
-        // Ugly code begins (The abstraction has caught up to me)
-        bufferBuilder.attributes.forEach(attribute -> {
-            GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, bufferBuilder.getVBO(attribute.getType()));
+        ShaderProgram shader = bufferBuilder.getShader() == null ? ShaderProgramKeys.getByVertexFormat(bufferBuilder.bufferInfo.vertexFormat()) : bufferBuilder.getShader();
 
-            Object data = Lists.toPrimitiveArray(attribute.getObjects(), GlNumberType.fromGlInt(attribute.getGlNumberType()));
-
-            if (data instanceof int[]) {
-                GL30.glBufferSubData(GL30.GL_ARRAY_BUFFER, 0, (int[]) data);
-            } else if (data instanceof float[]) {
-                GL30.glBufferSubData(GL30.GL_ARRAY_BUFFER, 0, (float[]) data);
-            }
-        });
-
-        ShaderProgram shader = bufferBuilder.getShader() == null ? ShaderProgramKeys.getByVertexFormat(bufferBuilder.vertexFormat) : bufferBuilder.getShader();
-        GL30.glUseProgram(shader.ID);
+        shader.use();
         bufferBuilder.uniformProviders.forEach(up -> up.apply(shader));
 
-        GL30.glDrawElements(bufferBuilder.drawMode.getGlMode(), indices.length, GL30.GL_UNSIGNED_INT, 0);
+        GL30.glDrawElements(bufferBuilder.bufferInfo.drawMode().getGlMode(), indices.length, GL30.GL_UNSIGNED_INT, 0);
 
         GL30.glBindVertexArray(0);
 
+        bufferBuilder.getVBO().rotate();
         bufferBuilder.clear();
     }
 

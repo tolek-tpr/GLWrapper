@@ -1,41 +1,49 @@
 package pl.epsi.glWrapper.buffers;
 
-import java.util.ArrayList;
+import pl.epsi.glWrapper.utils.Utils;
+
+import java.util.HashMap;
+
+import static pl.epsi.glWrapper.buffers.BufferBuilder.BufferInfo;
 
 public class Buffers {
 
-    private static final ArrayList<BufferBuilder> bufferBuilders = new ArrayList<>();
-    private static final ArrayList<Immediate> immediateBuffers = new ArrayList<>();
-
-    public static void init() {
-        for (DrawMode drawMode : DrawMode.values()) {
-            for (DrawMode.VertexFormat vertexFormat : DrawMode.VertexFormat.values()) {
-                addBufferBuilderAndImmediate(new BufferBuilder(drawMode, vertexFormat));
-            }
-        }
-    }
+    private static final HashMap<BufferInfo, BufferBuilder> bufferBuilders = new HashMap<>();
+    private static final HashMap<BufferInfo, Immediate> immediateBuffers = new HashMap<>();
 
     public static BufferBuilder getBuffer(DrawMode drawMode, DrawMode.VertexFormat format) {
-        if (bufferBuilders.isEmpty()) init();
-        for (BufferBuilder buffer : bufferBuilders) {
-            if (buffer.drawMode == drawMode && buffer.vertexFormat == format) return buffer;
-        }
+        return getBuffer(new BufferInfo(drawMode, format));
+    }
 
-        throw new IllegalArgumentException("Unable to find BufferBuilder for DrawMode " + drawMode + " and VertexFormat " + format);
+    public static BufferBuilder getBuffer(BufferInfo bufferInfo) {
+        if (!bufferBuilders.containsKey(bufferInfo)) genBuffer(BufferType.BUILDER, bufferInfo);
+        return Utils.getOrThrow(bufferBuilders, bufferInfo,
+                new IllegalArgumentException("Unable to find BufferBuilder for DrawMode " + bufferInfo.drawMode() + " and VertexFormat " + bufferInfo.vertexFormat()));
     }
 
     public static Immediate getImmediate(DrawMode drawMode, DrawMode.VertexFormat format) {
-        if (immediateBuffers.isEmpty()) init();
-        for (Immediate immediate : immediateBuffers) {
-            if (immediate.drawMode == drawMode && immediate.vertexFormat == format) return immediate;
-        }
-
-        throw new IllegalArgumentException("Unable to find Immediate buffer for DrawMode " + drawMode + " and VertexFormat " + format);
+        return getImmediate(new BufferInfo(drawMode, format));
     }
 
-    private static void addBufferBuilderAndImmediate(BufferBuilder buffer) {
-        bufferBuilders.add(buffer);
-        immediateBuffers.add(Immediate.fromBuffer(buffer));
+    public static Immediate getImmediate(BufferInfo bufferInfo) {
+        if (!immediateBuffers.containsKey(bufferInfo)) genBuffer(BufferType.IMMEDIATE, bufferInfo);
+        return Utils.getOrThrow(immediateBuffers, bufferInfo,
+                new IllegalArgumentException("Unable to find Immediate buffer for DrawMode " + bufferInfo.drawMode() + " and VertexFormat " + bufferInfo.vertexFormat()));
+    }
+
+    private static void genBuffer(BufferType type, BufferInfo info) {
+        if (type == BufferType.BUILDER) {
+            bufferBuilders.put(info, new BufferBuilder(info));
+        } else {
+            immediateBuffers.put(info, new Immediate(info));
+        }
+    }
+
+    enum BufferType {
+
+        IMMEDIATE,
+        BUILDER
+
     }
 
 }

@@ -93,6 +93,9 @@ public enum DrawMode {
         public ArrayList<AttributeContainer> getAttributes() {
             return this.attributes.stream().map(AttributeContainer::copy).collect(Collectors.toCollection(ArrayList::new));
         }
+        public int getAttributesSize() {
+            return this.attributes.size();
+        }
         public ArrayList<Class<? extends UniformProvider>> getUniformProviders() { return this.uniformProviders; }
 
     }

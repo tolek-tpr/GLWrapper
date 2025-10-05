@@ -1,8 +1,10 @@
 package pl.epsi.glWrapper.utils;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class Utils {
 
@@ -53,6 +55,23 @@ public class Utils {
         colors[3] = (color         & 255) / 255f;
 
         return colors;
+    }
+
+    public static void printByteBuffer(ByteBuffer buf) {
+        int pos = buf.position();
+        int limit = buf.limit();
+
+        System.out.print("[");
+        for (int i = pos; i < limit; i++) {
+            System.out.printf("%02X", buf.get(i));
+            if (i < limit - 1) System.out.print(" ");
+        }
+        System.out.println("]");
+    }
+
+    public static <K, V> V getOrThrow(HashMap<K, V> map, K key, IllegalArgumentException err) {
+        if (map.containsKey(key)) return map.get(key);
+        throw err;
     }
 
 }
