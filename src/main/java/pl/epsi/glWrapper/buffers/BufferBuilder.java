@@ -4,6 +4,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
+import org.lwjgl.system.MemoryUtil;
+import pl.epsi.glWrapper.buffers.gpu.GpuBuffer;
+import pl.epsi.glWrapper.buffers.gpu.MappableGpuBuffer;
+import pl.epsi.glWrapper.buffers.gpu.MappableGpuRingBuffer;
 import pl.epsi.glWrapper.render.Renderer;
 import pl.epsi.glWrapper.shader.ShaderProgram;
 import pl.epsi.glWrapper.shader.ShaderProgramKeys;
@@ -11,44 +15,52 @@ import pl.epsi.glWrapper.shader.TextureSamplerUniformProvider;
 import pl.epsi.glWrapper.shader.UniformProvider;
 import pl.epsi.glWrapper.utils.*;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BufferBuilder {
 
-    public static final int EBO = GL33.glGenBuffers();
-    public static final int MAX_BUFFER_SIZE = 1000;
-
-    public final DrawMode drawMode;
-    public final DrawMode.VertexFormat vertexFormat;
+    public final BufferInfo bufferInfo;
 
     public final ArrayList<AttributeContainer> attributes = new ArrayList<>();
-
-    private final HashMap<AttributeType, Integer> VBOs;
-
     public final ArrayList<Texture> textures = new ArrayList<>();
-
-    public ArrayList<UniformProvider> uniformProviders = new ArrayList<>();
+    public final ArrayList<UniformProvider> uniformProviders = new ArrayList<>();
 
     private final int VAO;
+    private final MappableGpuRingBuffer mappedVertexBufferObject;
+    private final MappableGpuBuffer mappedElementBufferObject;
 
     @Nullable
     private ShaderProgram shader;
 
-    protected BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat, int VAO) {
-        this.drawMode = drawMode;
-        this.vertexFormat = vertexFormat;
-        attributes.addAll(vertexFormat.getAttributes());
-        this.VBOs = VertexBufferHandler.getVBOsForVertexFormat(this.vertexFormat);
+    protected BufferBuilder(BufferInfo bufferInfo, int VAO) {
+        this.bufferInfo = bufferInfo;
+        attributes.addAll(bufferInfo.vertexFormat.getAttributes());
         this.VAO = VAO;
+        this.mappedVertexBufferObject = new MappableGpuRingBuffer(GpuBuffer.BufferTarget.ARRAY_BUFFER, GpuBuffer.BufferUsage.STREAM_DRAW, 3, 1024 * 1000);
+        this.mappedElementBufferObject = new MappableGpuBuffer(GpuBuffer.BufferUsage.STREAM_DRAW, GpuBuffer.BufferTarget.ELEMENT_ARRAY_BUFFER, 1024 * 1000);
+
+        enableVertexAttribArrays();
+    }
+
+    protected BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat, int VAO) {
+        this(new BufferInfo(drawMode, vertexFormat), VAO);
     }
 
     public BufferBuilder(DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {
-        this(drawMode, vertexFormat, GL33.glGenVertexArrays());
+        this(new BufferInfo(drawMode, vertexFormat), GL33.glGenVertexArrays());
     }
 
+    public BufferBuilder(BufferInfo bufferInfo) {
+        this(bufferInfo, GL33.glGenVertexArrays());
+    }
+
+    // region Builder
     public BufferBuilder vertex(float x, float y, float z) {
         AttributeContainer container = getContainerForType(AttributeType.get("POSITION"));
         container.addValues(x, y, z);
@@ -80,37 +92,6 @@ public class BufferBuilder {
         return this;
     }
 
-    public void setupVao() {
-        GL30.glBindVertexArray(this.VAO);
-        GL30.glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, BufferBuilder.EBO);
-        this.attributes.forEach((attribute) -> {
-            GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, this.getVBO(attribute.getType()));
-            GL30.glBufferData(GL30.GL_ARRAY_BUFFER, (long) MAX_BUFFER_SIZE * Float.BYTES * attribute.getSize(), GL30.GL_DYNAMIC_DRAW);
-
-            if (GlNumberType.shouldUseIPointer(attribute.glNumberType)) {
-                GL30.glVertexAttribIPointer(attribute.getLocation(), attribute.getSize(),
-                        attribute.getGlNumberType(), 0, 0);
-            } else {
-                GL30.glVertexAttribPointer(attribute.getLocation(), attribute.getSize(),
-                        attribute.getGlNumberType(), attribute.getNormalized(), 0, 0);
-            }
-
-            GL30.glEnableVertexAttribArray(attribute.getLocation());
-        });
-
-        // Reset
-        GL30.glBindBuffer(GL30.GL_ARRAY_BUFFER, 0);
-    }
-
-    public void addToQueue() {
-        Renderer.addToRenderQueue(this);
-    }
-
-    public void clear() {
-        this.attributes.forEach(AttributeContainer::clear);
-        this.uniformProviders.clear();
-    }
-
     public void withShader(@Nullable ShaderProgram shader) {
         this.shader = shader;
     }
@@ -120,24 +101,66 @@ public class BufferBuilder {
             this.shader = null;
             return null;
         }
-        this.shader = new ShaderProgram(ShaderProgramKeys.getVertexShaderByVertexFormat(this.vertexFormat), fragmentShader);
+        this.shader = new ShaderProgram(ShaderProgramKeys.getVertexShaderByVertexFormat(this.bufferInfo.vertexFormat), fragmentShader);
         return this.shader;
     }
 
     public void withVertexAttribute(AttributeContainer container) {
         if (!this.attributes.contains(container)) this.attributes.add(container);
-        if (!this.VBOs.containsKey(container.getType())) this.VBOs.put(container.getType(), VertexBufferHandler.getVBO(container.getType()));
     }
 
     public void withUniform(UniformProvider up) {
         Lists.add(this.uniformProviders, up);
     }
+    // endregion
+
+    public void setupVao() {
+        if (this.attributes.size() > this.bufferInfo.vertexFormat.getAttributesSize()) enableVertexAttribArrays();
+
+        GL30.glBindVertexArray(this.VAO);
+
+        this.mappedElementBufferObject.bind();
+        this.mappedVertexBufferObject.getCurrentBuffer().bind();
+
+        ByteBuffer mappedMemory = this.mappedVertexBufferObject.beginWrite();
+        mappedMemory.order(ByteOrder.nativeOrder());
+        long mappedMemoryAddress = MemoryUtil.memAddress(mappedMemory);
+
+        AtomicInteger ptr = new AtomicInteger(0);
+
+        this.attributes.forEach(attribute -> {
+            attribute.getBuffer().rewind();
+            MemoryUtil.memCopy(MemoryUtil.memAddress(attribute.getBuffer()), mappedMemoryAddress + ptr.get(),
+                    (long) attribute.getCount() * attribute.glNumberType.getSizeInBytes());
+
+            if (GlNumberType.shouldUseIPointer(attribute.glNumberType)) {
+                GL30.glVertexAttribIPointer(attribute.getLocation(), attribute.getSize(),
+                        attribute.getGlNumberType(), 0, ptr.get());
+            } else {
+                GL30.glVertexAttribPointer(attribute.getLocation(), attribute.getSize(),
+                        attribute.getGlNumberType(), attribute.getNormalized(), 0, ptr.get());
+            }
+
+            ptr.getAndAdd(attribute.getCount() * attribute.glNumberType.getSizeInBytes());
+        });
+    }
+
+    public void enableVertexAttribArrays() {
+        GL33.glBindVertexArray(this.VAO);
+        this.attributes.forEach(attrib -> GL30.glEnableVertexAttribArray(attrib.getLocation()));
+        GL33.glBindVertexArray(0);
+    }
+
+
+
+    public MappableGpuRingBuffer getVBO() { return this.mappedVertexBufferObject; }
+    public MappableGpuBuffer getEBO() { return this.mappedElementBufferObject; }
 
     public int getVAO() {
         // Hacky place for uniforms
         ArrayList<UniformProvider> uniformProviders = new ArrayList<>();
 
-        for (Class<? extends UniformProvider> provider : this.vertexFormat.getUniformProviders()) {
+        for (Class<? extends UniformProvider> provider : this.bufferInfo.vertexFormat.getUniformProviders()) {
             if (provider == TextureSamplerUniformProvider.class) {
                 uniformProviders.add(new TextureSamplerUniformProvider(this.textures));
             } else {
@@ -157,18 +180,26 @@ public class BufferBuilder {
     @Nullable
     public ShaderProgram getShader() { return this.shader; }
 
-    public Integer getVBO(AttributeType type) {
-        if (!VBOs.containsKey(type)) throw new IllegalArgumentException("Illegal attribute type " + type + " for vertex format " + vertexFormat);
-        return VBOs.get(type);
-    }
-
     public AttributeContainer getContainerForType(AttributeType type) {
         for (var attrib : attributes) {
             if (attrib.type == type) return attrib;
         }
 
-        throw new IllegalArgumentException("Unknown attribute (" + type + ") for " + this.getClass().getName() + " with VertexFormat " + vertexFormat);
+        throw new IllegalArgumentException("Unknown attribute (" + type + ") for " + this.getClass().getName() + " with VertexFormat " + bufferInfo.vertexFormat);
     }
+
+
+
+    public void addToQueue() {
+        Renderer.addToRenderQueue(this);
+    }
+
+    public void clear() {
+        this.attributes.forEach(AttributeContainer::clear);
+        this.uniformProviders.clear();
+    }
+
+
 
     public record AttributeType(String name) {
 
@@ -212,19 +243,24 @@ public class BufferBuilder {
         public boolean normalized = false;
         private final int location;
 
-        private final ArrayList<Object> objects = new ArrayList<>();
+        private final ByteBuffer buffer;
+
+        private int count;
 
         public AttributeContainer(AttributeType type, int size, GlNumberType glNumberType, int location) {
             this.type = type;
             this.size = size;
             this.glNumberType = glNumberType;
             this.location = location;
+            buffer = MemoryUtil.memAlloc(1024 * 1000);
+            buffer.order(ByteOrder.nativeOrder());
         }
 
         public void addValues(Object... values) {
             for (Object obj : values) {
                 if (this.glNumberType.getClazz().isInstance(obj)) {
-                    objects.add(obj);
+                    this.glNumberType.put(buffer, obj);
+                    count++;
                 } else {
                     throw new IllegalArgumentException("Provided wrong type for this attribute container! Type: " + obj.getClass().getName());
                 }
@@ -238,16 +274,15 @@ public class BufferBuilder {
         public int getLocation() { return this.location; }
         public void setNormalized(boolean normalize) { this.normalized = normalize; }
 
-        // Should only be used for position
         public int getCount() {
-            if (this.type != AttributeType.get("POSITION")) throw new IllegalStateException("Executed getCount on AttributeContainer that is a " + type + " type");
-            return objects.size();
+            return this.count;
         }
 
-        public ArrayList<Object> getObjects() { return this.objects; }
+        public ByteBuffer getBuffer() { return this.buffer; }
 
         public void clear() {
-            objects.clear();
+            buffer.clear();
+            count = 0;
         }
 
         public AttributeContainer copy() {
@@ -255,5 +290,7 @@ public class BufferBuilder {
         }
 
     }
+
+    public static record BufferInfo(DrawMode drawMode, DrawMode.VertexFormat vertexFormat) {}
 
 }

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.system.MemoryStack;
 import pl.epsi.glWrapper.buffers.BufferBuilder;
 import pl.epsi.glWrapper.buffers.Buffers;
@@ -17,7 +18,7 @@ import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL43C.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
@@ -87,7 +88,7 @@ public class Main {
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
 
         // Make the window visible
         glfwShowWindow(window);
@@ -97,6 +98,15 @@ public class Main {
 
     private void loop() {
         GL.createCapabilities();
+
+        //if (glGetInteger(GL_MAJOR_VERSION) >= 4 && glGetInteger(GL_MINOR_VERSION) >= 3) {
+        //    glEnable(GL_DEBUG_OUTPUT);
+        //    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        //    glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> {
+        //        String msg = GLDebugMessageCallback.getMessage(length, message);
+        //        System.err.println("GL DEBUG: " + msg);
+        //    }, 0);
+        //}
 
         // Set the clear color
         glClearColor(0.0f, 0.2f, 0.3f, 0.0f);
