@@ -4,10 +4,12 @@ import org.junit.jupiter.api.Test;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryStack;
 import pl.epsi.glWrapper.buffers.BufferBuilder;
 import pl.epsi.glWrapper.buffers.Buffers;
 import pl.epsi.glWrapper.buffers.DrawMode;
+import pl.epsi.glWrapper.camera.Camera;
 import pl.epsi.glWrapper.render.Renderer;
 import pl.epsi.glWrapper.shader.ShaderProgram;
 import pl.epsi.glWrapper.shader.UniformProvider;
@@ -24,6 +26,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public class Main {
 
     private long window;
+    private final Camera camera = new Camera();
 
     @Test
     public void runNormal() {
@@ -50,20 +53,13 @@ public class Main {
 
         // Create the window
         window = glfwCreateWindow(800, 600, "Test Env", NULL, NULL);
-        Renderer.updateProjMatrix(800, 600);
         if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
-        // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-            if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
-                glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
-        });
-
-        glfwSetFramebufferSizeCallback(window, (window, width, height) -> {
-            glViewport(0, 0, width, height);
-            Renderer.updateProjMatrix(width, height);
-        });
+        Config.setupCallbacks(window);
+        Config.setupRenderer(800, 600, true);
+        Config.setupCloseDetection(window, GLFW_KEY_ESCAPE);
+        Config.setupCameraCallbacks(camera);
 
         // Get the thread stack and push a new frame
         try (MemoryStack stack = stackPush()) {
@@ -112,6 +108,7 @@ public class Main {
 
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            camera.tick(window);
 
             //DrawContext.drawRect(customBuilder, 0, 0, 255, 255, 0, true);
             customBuilder.withUniform(new UniformProvider() {
@@ -121,13 +118,17 @@ public class Main {
                 }
             });
 
-            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
-            customBuilder.vertex(0, 255, 0)    .color(1, 0, 1, 0).attrib(type, 0f);
-            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
-            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
-            customBuilder.vertex(255, 0, 0)    .color(1, 0, 0, 1).attrib(type, 0f);
-            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(255, 255, 0)  .color(1f, 1, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 255, 0)    .color(1f, 0, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(0, 0, 0)      .color(1f, 1, 0, 0).attrib(type, 1f);
+            customBuilder.vertex(0, 0, 0)      .color(1f, 1, 0, 0).attrib(type, 1f);
+            customBuilder.vertex(255, 0, 0)    .color(1f, 0, 0, 1).attrib(type, 0f);
+            customBuilder.vertex(255, 255, 0)  .color(1f, 1, 1, 0).attrib(type, 0f);
+            GL30.glEnable(GL_DEPTH_TEST);
+            GL30.glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             customBuilder.addToQueue();
+            DrawContext.drawRect(50, 50, 300, 300, 50, 0x55FF0000, true);
 
             DrawContext.drawTexture(Buffers.getBuffer(DrawMode.TRIANGLES, DrawMode.VertexFormat.POSITION_COLOR_TEXTURE),
                     texture, 300, 300, 600, 600, 0, 0, 0, 16, 16, true);
@@ -142,6 +143,7 @@ public class Main {
             glfwSwapBuffers(window); // swap the color buffers
 
             glfwPollEvents();
+            Time.onEndFrame();
         }
 
         glfwFreeCallbacks(window);

@@ -16,6 +16,7 @@ public class Renderer {
     private static final ArrayList<BufferBuilder> renderQueue = new ArrayList<>();
 
     public static Matrix4f projMatrix;
+    public static Matrix4f viewMatrix = new Matrix4f().identity();
 
     public static void render() {
         renderQueue.forEach(Renderer::renderBuffer);
@@ -61,7 +62,7 @@ public class Renderer {
     }
 
     public static void updateProjMatrix(int width, int height) {
-        projMatrix = new Matrix4f().ortho(0.0f, width, 0.0f, height, -1, 1);
+        projMatrix = new Matrix4f().ortho(0.0f, width, 0.0f, height, -1000, 1000);
     }
 
     public static void addToRenderQueue(BufferBuilder builder) {

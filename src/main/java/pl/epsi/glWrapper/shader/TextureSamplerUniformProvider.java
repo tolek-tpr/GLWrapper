@@ -2,7 +2,7 @@ package pl.epsi.glWrapper.shader;
 
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL30;
-import pl.epsi.glWrapper.Config;
+import pl.epsi.glWrapper.utils.RenderSystem;
 import pl.epsi.glWrapper.utils.Texture;
 
 import java.util.ArrayList;
@@ -17,13 +17,13 @@ public class TextureSamplerUniformProvider implements UniformProvider {
 
     @Override
     public void apply(ShaderProgram program) {
-        for (int i = 0; i < Math.min(textures.size(), Config.TEXTURE_AMOUNT); i++) {
+        for (int i = 0; i < Math.min(textures.size(), RenderSystem.getMaxTextures()); i++) {
             GL30.glActiveTexture(GL13.GL_TEXTURE0 + i);
             textures.get(i).use();
         }
 
-        int[] samplers = new int[Config.TEXTURE_AMOUNT];
-        for (int i = 0; i < Config.TEXTURE_AMOUNT; i++) {
+        int[] samplers = new int[RenderSystem.getMaxTextures()];
+        for (int i = 0; i < RenderSystem.getMaxTextures(); i++) {
             samplers[i] = i;
         }
 

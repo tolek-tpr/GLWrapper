@@ -8,9 +8,10 @@ out vec3 fUVI;
 out vec4 fColor;
 
 uniform mat4 projMatrix;
+uniform mat4 viewMatrix;
 
 void main() {
-    gl_Position = projMatrix * vec4(aPos, 1);
+    gl_Position = projMatrix * viewMatrix * vec4(aPos, 1);
     fUVI = aUVI;
     fColor = aColor;
 }
