@@ -55,6 +55,11 @@ public class BufferBuilder {
         return this;
     }
 
+    public BufferBuilder color(int a, int r, int g, int b) {
+        float[] colors = Utils.getArgbColors0To1(a, r, g, b);
+        return this.color(colors[0], colors[1], colors[2], colors[3]);
+    }
+
     public BufferBuilder color(float a, float r, float g, float b) {
         AttributeContainer container = getContainerForType(AttributeType.get("COLOR"));
         container.addValues(r, g, b, a);

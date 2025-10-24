@@ -55,4 +55,8 @@ public class Utils {
         return colors;
     }
 
+    public static float[] getArgbColors0To1(int a, int r, int g, int b) {
+        return new float[]{ (float) a / 255, (float) r / 255, (float) g / 255, (float) b / 255 };
+    }
+
 }

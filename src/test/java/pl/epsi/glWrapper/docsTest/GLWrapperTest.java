@@ -77,10 +77,10 @@ public class GLWrapperTest {
 
             BufferBuilder builder = Buffers.getBuffer(DrawMode.TRIANGLE_STRIP, DrawMode.VertexFormat.POSITION_COLOR);
 
-            builder.vertex(200, 400, 0).color(1, 0, 1, 0);
-            builder.vertex(600, 400, 0).color(1, 1, 0, 0);
-            builder.vertex(200, 200, 0).color(1, 0, 0, 1);
-            builder.vertex(600, 200, 0).color(1, 1, 1, 0);
+            builder.vertex(200, 400, 0).color(1f, 0, 1, 0);
+            builder.vertex(600, 400, 0).color(1f, 1, 0, 0);
+            builder.vertex(200, 200, 0).color(1f, 0, 0, 1);
+            builder.vertex(600, 200, 0).color(1f, 1, 1, 0);
             builder.addToQueue();
 
             Renderer.render();

@@ -14,19 +14,11 @@ public class ShaderProgram {
 
     public int ID;
 
-    public ShaderProgram(Identifier vertex, Identifier fragment, Identifier json) {
-        this(vertex.asInputStream(), fragment.asInputStream(), json.asInputStream());
-    }
-
     public ShaderProgram(Identifier vertex, Identifier fragment) {
         this(vertex.asInputStream(), fragment.asInputStream());
     }
 
     private ShaderProgram(InputStream vertexStream, InputStream fragmentStream) {
-        this(vertexStream, fragmentStream, null);
-    }
-
-    private ShaderProgram(InputStream vertexStream, InputStream fragmentStream, InputStream jsonStream) {
         try {
             String vCode = Utils.readFile(vertexStream);
             String fCode = Utils.readFile(fragmentStream);
