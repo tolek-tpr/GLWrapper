@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GLDebugMessageCallback;
 import org.lwjgl.system.MemoryStack;
 import pl.epsi.glWrapper.buffers.BufferBuilder;
@@ -131,21 +132,25 @@ public class Main {
                 }
             });
 
-            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
-            customBuilder.vertex(0, 255, 0)    .color(1, 0, 1, 0).attrib(type, 0f);
-            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
-            customBuilder.vertex(0, 0, 0)      .color(1, 1, 0, 0).attrib(type, 1f);
+            customBuilder.vertex(255, 255, 0)  .color(1, 0, 0, 1).attrib(type, 0f);
+            customBuilder.vertex(0, 255, 0)    .color(1, 0, 0, 1).attrib(type, 0f);
+            customBuilder.vertex(0, 0, 0)      .color(1, 0, 0, 1).attrib(type, 1f);
+            customBuilder.vertex(0, 0, 0)      .color(1, 0, 0, 1).attrib(type, 1f);
             customBuilder.vertex(255, 0, 0)    .color(1, 0, 0, 1).attrib(type, 0f);
-            customBuilder.vertex(255, 255, 0)  .color(1, 1, 1, 0).attrib(type, 0f);
+            customBuilder.vertex(255, 255, 0)  .color(1, 0, 0, 1).attrib(type, 0f);
             customBuilder.addToQueue();
 
             DrawContext.drawTexture(Buffers.getBuffer(DrawMode.TRIANGLES, DrawMode.VertexFormat.POSITION_COLOR_TEXTURE),
                     texture, 300, 300, 600, 600, 0, 0, 0, 16, 16, true);
 
-            DrawContext.drawGradient(000, 600, 150, 450, 0, GradientDirection.TOP_TO_BOTTOM, 0xFF002991, 0xFF00916f, true);
-            DrawContext.drawGradient(000, 450, 150, 300, 0, GradientDirection.BOTTOM_TO_TOP, 0xFF002991, 0xFF00916f, true);
-            DrawContext.drawGradient(150, 600, 300, 450, 0, GradientDirection.LEFT_TO_RIGHT, 0xFF002991, 0xFF00916f, true);
-            DrawContext.drawGradient(150, 450, 300, 300, 0, GradientDirection.RIGHT_TO_LEFT, 0xFF002991, 0xFF00916f, true);
+            //DrawContext.drawGradient(000, 600, 150, 450, 0, GradientDirection.TOP_TO_BOTTOM, 0xFF002991, 0xFF00916f, true);
+            //DrawContext.drawGradient(000, 450, 150, 300, 0, GradientDirection.BOTTOM_TO_TOP, 0xFF002991, 0xFF00916f, true);
+            //DrawContext.drawGradient(150, 600, 300, 450, 0, GradientDirection.LEFT_TO_RIGHT, 0xFF002991, 0xFF00916f, true);
+            //DrawContext.drawGradient(150, 450, 300, 300, 0, GradientDirection.RIGHT_TO_LEFT, 0xFF002991, 0xFF00916f, true);
+
+            GL30.glEnable(GL30.GL_BLEND);
+            GL30.glBlendFunc(GL30.GL_SRC_ALPHA, GL30.GL_ONE_MINUS_SRC_ALPHA);
+            DrawContext.drawGradient(0, 600, 150, 450, 0, null, 0xFF0000FF, 0x000000FF, true);
 
             Renderer.render();
 

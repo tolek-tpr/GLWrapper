@@ -42,8 +42,8 @@ public class BufferBuilder {
         this.bufferInfo = bufferInfo;
         attributes.addAll(bufferInfo.vertexFormat.getAttributes());
         this.VAO = VAO;
-        this.mappedVertexBufferObject = new MappableGpuRingBuffer(GpuBuffer.BufferTarget.ARRAY_BUFFER, GpuBuffer.BufferUsage.STREAM_DRAW, 3, 1024 * 1000);
-        this.mappedElementBufferObject = new MappableGpuBuffer(GpuBuffer.BufferUsage.STREAM_DRAW, GpuBuffer.BufferTarget.ELEMENT_ARRAY_BUFFER, 1024 * 1000);
+        this.mappedVertexBufferObject = new MappableGpuRingBuffer(GpuBuffer.BufferTarget.ARRAY_BUFFER, GpuBuffer.BufferUsage.STREAM_DRAW, 3, 1024 * 1024 * 512);
+        this.mappedElementBufferObject = new MappableGpuBuffer(GpuBuffer.BufferUsage.STREAM_DRAW, GpuBuffer.BufferTarget.ELEMENT_ARRAY_BUFFER, 1024 * 1024 * 512);
 
         enableVertexAttribArrays();
     }
@@ -252,7 +252,7 @@ public class BufferBuilder {
             this.size = size;
             this.glNumberType = glNumberType;
             this.location = location;
-            buffer = MemoryUtil.memAlloc(1024 * 1000);
+            buffer = MemoryUtil.memAlloc(1024 * 1024 * 512);
             buffer.order(ByteOrder.nativeOrder());
         }
 
